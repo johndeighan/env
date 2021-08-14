@@ -1,0 +1,34 @@
+{
+	"name": "@jdeighan/env",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "enhanced syntax for .env files",
+	"main": "./src/EnvLoaderEx.js",
+	"exports": {
+		".": "./src/EnvLoaderEx.js"
+	},
+	"engines": {
+		"node": ">=12.0.0"
+	},
+	"scripts": {
+		"build": "cls && coffee -c .",
+		"pretest": "cls && coffee -c .",
+		"test": "ava ./test/*.test.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/johndeighan/env.git"
+	},
+	"keywords": [
+		"environment variables"
+	],
+	"author": "John Deighan",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/johndeighan/env/issues"
+	},
+	"homepage": "https://github.com/johndeighan/env#readme",
+	"dependencies": {
+		"@jdeighan/coffee-utils": "^1.1.2"
+	}
+}
