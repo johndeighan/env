@@ -29,6 +29,8 @@
 	},
 	"homepage": "https://github.com/johndeighan/env#readme",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^1.1.2"
+		"@jdeighan/ava-tester": "^1.0.3",
+		"@jdeighan/coffee-utils": "^1.1.2",
+		"@jdeighan/string-input": "^1.0.21"
 	}
 }
