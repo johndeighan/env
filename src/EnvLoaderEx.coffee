@@ -2,28 +2,125 @@
 
 import assert from 'assert'
 
-import {say, undef, pass, error, warn, rtrim} from '@jdeighan/coffee-utils'
+import {
+	say,
+	undef,
+	pass,
+	error,
+	warn,
+	rtrim,
+	isArray,
+	} from '@jdeighan/coffee-utils'
+import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo} from '@jdeighan/coffee-utils/fs'
+import {parsePLL} from '@jdeighan/string-input/pll'
 
 # ---------------------------------------------------------------------------
 # Load environment from .env file
 
 export loadEnvFrom = (searchDir) ->
 
-	filepath = pathTo('.env', searchDir, "up")
-	if not filepath?
-		warn "loadEnvFrom('#{searchDir}'): No .env file found"
-		return
-	return loadEnv(slurp(filepath))
+	debug "enter loadEnvFrom()"
+	tree = loadEnvFile(searchDir)
+	procEnv(tree)
+	debug "return from loadEnvFrom()"
+	return tree
 
 # ---------------------------------------------------------------------------
 # Load environment from a string
 
-export loadenv = (contents) ->
+export loadEnvFile = (searchDir) ->
 
+	debug "enter loadEnvFile('#{searchDir}')"
 	filepath = pathTo('.env', searchDir, "up")
+	if not filepath?
+		warn "loadEnvFile('#{searchDir}'): No .env file found"
+		debug "return - no .env file found"
+		return
 	contents = slurp(filepath)
-	say contents, "FILE CONTENTS:"
+	tree = parseEnv(contents)
+	debug "return from loadEnvFile() - tree"
+	return tree
+
+# ---------------------------------------------------------------------------
+# Load environment from a string
+
+export parseEnv = (contents) ->
+
+	debug "enter parseEnv()"
+	tree = parsePLL(contents, EnvMapper)
+	debug "return from parseEnv() - tree"
+	return tree
+
+# ---------------------------------------------------------------------------
+
+doCompare = (arg1, op, arg2) ->
+
+	switch op
+		when '=='
+			return (arg1 == arg2)
+		when '!='
+			return (arg1 != arg2)
+		when '<'
+			return (arg1 < arg2)
+		when '<='
+			return (arg1 <= arg2)
+		when '>'
+			return (arg1 > arg2)
+		when '>='
+			return (arg1 >= arg2)
+		else
+			error "doCompare(): Invalid operator '#{op}'"
+
+# ---------------------------------------------------------------------------
+# Load environment from a string
+
+export procEnv = (tree) ->
+
+	debug "enter procEnv() - tree"
+	assert isArray(tree), "procEnv(): tree is not an array"
+	for h in tree
+		switch h.node.type
+
+			when 'assign'
+				{key, value} = h.node
+				process.env[key] = value
+				debug "assign #{key} = '#{value}'"
+
+			when 'if_truthy'
+				{key} = h.node
+				debug "if_truthy: '#{key}'"
+				if process.env[key]
+					debug "YES: proc body"
+					procEnv(h.body)
+
+			when 'if_falsy'
+				{key} = h.node
+				debug "if_falsy: '#{key}'"
+				if not process.env[key]
+					debug "YES: proc body"
+					procEnv(h.body)
+
+			when 'compare_ident'
+				{key, op, ident} = h.node
+				arg1 = process.env[key]
+				arg2 = process.env[ident]
+				if doCompare(arg1, op, arg2)
+					procEnv(h.body)
+
+			when 'compare_number'
+				{key, op, number} = h.node
+				arg1 = Number(process.env[key])
+				if doCompare(arg1, op, number)
+					procEnv(h.body)
+
+			when 'compare_string'
+				{key, op, string} = h.node
+				arg1 = process.env[key]
+				if doCompare(arg1, op, string)
+					procEnv(h.body)
+
+	debug "return from procEnv()"
 	return
 
 # ---------------------------------------------------------------------------
@@ -38,6 +135,7 @@ export EnvMapper = (str) ->
 			(.*)
 			$///)
 		[_, key, value] = lMatches
+		key = key.toUpperCase()
 		value = rtrim(value)
 		return {type: 'assign', key, value}
 	else if lMatches = str.match(///^
@@ -50,6 +148,7 @@ export EnvMapper = (str) ->
 			([A-Za-z_]+)      # identifier
 			$///)
 		[_, neg, key] = lMatches
+		key = key.toUpperCase()
 		if neg
 			return {type: 'if_falsy', key}
 		else
@@ -76,6 +175,7 @@ export EnvMapper = (str) ->
 				)
 			$///)
 		[_, key, op, ident, number, sqstr, dqstr] = lMatches
+		key = key.toUpperCase()
 		if ident
 			return {type: 'compare_ident', key, op, ident}
 		else if number
