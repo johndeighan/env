@@ -31,6 +31,7 @@
 	"dependencies": {
 		"@jdeighan/ava-tester": "^1.0.3",
 		"@jdeighan/coffee-utils": "^1.1.2",
-		"@jdeighan/string-input": "^1.0.21"
+		"@jdeighan/string-input": "^1.0.27",
+		"coffeescript": "^2.5.1"
 	}
 }
