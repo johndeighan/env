@@ -30,7 +30,7 @@
 	"homepage": "https://github.com/johndeighan/env#readme",
 	"dependencies": {
 		"@jdeighan/ava-tester": "^1.0.3",
-		"@jdeighan/coffee-utils": "^1.1.2",
+		"@jdeighan/coffee-utils": "^1.1.10",
 		"@jdeighan/string-input": "^1.0.27",
 		"coffeescript": "^2.5.1"
 	}
