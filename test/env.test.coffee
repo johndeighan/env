@@ -6,13 +6,12 @@ import {AvaTester} from '@jdeighan/ava-tester'
 import {say, undef, pass, taml} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {mydir} from '@jdeighan/coffee-utils/fs'
-import {parsePLL} from '@jdeighan/string-input/pll'
 import {
+	EnvInput,
 	loadEnvFrom,
 	loadEnvFile,
 	parseEnv,
 	procEnv,
-	EnvMapper,
 	} from '@jdeighan/env'
 
 dir = mydir(`import.meta.url`)
@@ -34,10 +33,11 @@ contents = """
 		"""
 
 # ---------------------------------------------------------------------------
-# --- test using EnvMapper
+# --- test using EnvInput
 
 (() ->
-	tree = parsePLL(contents, EnvMapper)
+	oInput = new EnvInput(contents)
+	tree = oInput.getTree()
 
 	tester.equal 78, tree, taml("""
 			---

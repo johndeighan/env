@@ -27,15 +27,11 @@ import {
 } from '@jdeighan/coffee-utils/fs';
 
 import {
-  parsePLL
-} from '@jdeighan/string-input/pll';
-
-import {
+  EnvInput,
   loadEnvFrom,
   loadEnvFile,
   parseEnv,
-  procEnv,
-  EnvMapper
+  procEnv
 } from '@jdeighan/env';
 
 dir = mydir(import.meta.url);
@@ -54,10 +50,11 @@ if not development
 		mood = happy`;
 
 // ---------------------------------------------------------------------------
-// --- test using EnvMapper
+// --- test using EnvInput
 (function() {
-  var tree;
-  tree = parsePLL(contents, EnvMapper);
+  var oInput, tree;
+  oInput = new EnvInput(contents);
+  tree = oInput.getTree();
   return tester.equal(78, tree, taml(`---
 -
 	lineNum: 1

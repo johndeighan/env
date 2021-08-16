@@ -13,7 +13,75 @@ import {
 	} from '@jdeighan/coffee-utils'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo} from '@jdeighan/coffee-utils/fs'
-import {parsePLL} from '@jdeighan/string-input/pll'
+import {PLLInput} from '@jdeighan/string-input/pll'
+
+# ---------------------------------------------------------------------------
+
+export class EnvInput extends PLLInput
+
+	mapString: (str) ->
+
+		if lMatches = str.match(///^
+				([A-Za-z_]+)      # identifier
+				\s*
+				=
+				\s*
+				(.*)
+				$///)
+			[_, key, value] = lMatches
+			key = key.toUpperCase()
+			value = rtrim(value)
+			return {type: 'assign', key, value}
+		else if lMatches = str.match(///^
+				if
+				\s+
+				(?:
+					(not)
+					\s+
+					)?
+				([A-Za-z_]+)      # identifier
+				$///)
+			[_, neg, key] = lMatches
+			key = key.toUpperCase()
+			if neg
+				return {type: 'if_falsy', key}
+			else
+				return {type: 'if_truthy', key}
+		else if lMatches = str.match(///^
+				if
+				\s+
+				([A-Za-z_]+)      # identifier (key)
+				\s*
+				(
+					  ==           # comparison operator
+					| !=
+					| >
+					| >=
+					| <
+					| <=
+					)
+				\s*
+				(?:
+					  ([A-Za-z_]+)      # identifier
+					| ([0-9]+)          # number
+					| ' ([^']*) '       # single quoted string
+					| " ([^"]*) "       # double quoted string
+					)
+				$///)
+			[_, key, op, ident, number, sqstr, dqstr] = lMatches
+			key = key.toUpperCase()
+			if ident
+				return {type: 'compare_ident', key, op, ident}
+			else if number
+				return {type: 'compare_number', key, op, number: Number(number)}
+			else if sqstr
+				return {type: 'compare_string', key, op, string: sqstr}
+			else if dqstr
+				return {type: 'compare_string', key, op, string: dqstr}
+			else
+				error "Invalid line: '#{str}'"
+		else
+			error "Invalid line: '#{str}'"
 
 # ---------------------------------------------------------------------------
 # Load environment from .env file
@@ -48,7 +116,8 @@ export loadEnvFile = (searchDir) ->
 export parseEnv = (contents) ->
 
 	debug "enter parseEnv()"
-	tree = parsePLL(contents, EnvMapper)
+	oInput = new EnvInput(contents)
+	tree = oInput.getTree()
 	debug "return from parseEnv() - tree"
 	return tree
 
@@ -122,71 +191,5 @@ export procEnv = (tree) ->
 
 	debug "return from procEnv()"
 	return
-
-# ---------------------------------------------------------------------------
-
-export EnvMapper = (str) ->
-
-	if lMatches = str.match(///^
-			([A-Za-z_]+)      # identifier
-			\s*
-			=
-			\s*
-			(.*)
-			$///)
-		[_, key, value] = lMatches
-		key = key.toUpperCase()
-		value = rtrim(value)
-		return {type: 'assign', key, value}
-	else if lMatches = str.match(///^
-			if
-			\s+
-			(?:
-				(not)
-				\s+
-				)?
-			([A-Za-z_]+)      # identifier
-			$///)
-		[_, neg, key] = lMatches
-		key = key.toUpperCase()
-		if neg
-			return {type: 'if_falsy', key}
-		else
-			return {type: 'if_truthy', key}
-	else if lMatches = str.match(///^
-			if
-			\s+
-			([A-Za-z_]+)      # identifier (key)
-			\s*
-			(
-				  ==           # comparison operator
-				| !=
-				| >
-				| >=
-				| <
-				| <=
-				)
-			\s*
-			(?:
-				  ([A-Za-z_]+)      # identifier
-				| ([0-9]+)          # number
-				| ' ([^']*) '       # single quoted string
-				| " ([^"]*) "       # double quoted string
-				)
-			$///)
-		[_, key, op, ident, number, sqstr, dqstr] = lMatches
-		key = key.toUpperCase()
-		if ident
-			return {type: 'compare_ident', key, op, ident}
-		else if number
-			return {type: 'compare_number', key, op, number: Number(number)}
-		else if sqstr
-			return {type: 'compare_string', key, op, string: sqstr}
-		else if dqstr
-			return {type: 'compare_string', key, op, string: dqstr}
-		else
-			error "Invalid line: '#{str}'"
-	else
-		error "Invalid line: '#{str}'"
 
 # ---------------------------------------------------------------------------

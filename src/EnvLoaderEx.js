@@ -24,8 +24,81 @@ import {
 } from '@jdeighan/coffee-utils/fs';
 
 import {
-  parsePLL
+  PLLInput
 } from '@jdeighan/string-input/pll';
+
+// ---------------------------------------------------------------------------
+export var EnvInput = class EnvInput extends PLLInput {
+  mapString(str) {
+    var _, dqstr, ident, key, lMatches, neg, number, op, sqstr, value;
+    if (lMatches = str.match(/^([A-Za-z_]+)\s*=\s*(.*)$/)) { // identifier
+      [_, key, value] = lMatches;
+      key = key.toUpperCase();
+      value = rtrim(value);
+      return {
+        type: 'assign',
+        key,
+        value
+      };
+    } else if (lMatches = str.match(/^if\s+(?:(not)\s+)?([A-Za-z_]+)$/)) { // identifier
+      [_, neg, key] = lMatches;
+      key = key.toUpperCase();
+      if (neg) {
+        return {
+          type: 'if_falsy',
+          key
+        };
+      } else {
+        return {
+          type: 'if_truthy',
+          key
+        };
+      }
+    } else if (lMatches = str.match(/^if\s+([A-Za-z_]+)\s*(==|!=|>|>=|<|<=)\s*(?:([A-Za-z_]+)|([0-9]+)|'([^']*)'|"([^"]*)")$/)) { // identifier (key)
+      // comparison operator
+      // identifier
+      // number
+      // single quoted string
+      // double quoted string
+      [_, key, op, ident, number, sqstr, dqstr] = lMatches;
+      key = key.toUpperCase();
+      if (ident) {
+        return {
+          type: 'compare_ident',
+          key,
+          op,
+          ident
+        };
+      } else if (number) {
+        return {
+          type: 'compare_number',
+          key,
+          op,
+          number: Number(number)
+        };
+      } else if (sqstr) {
+        return {
+          type: 'compare_string',
+          key,
+          op,
+          string: sqstr
+        };
+      } else if (dqstr) {
+        return {
+          type: 'compare_string',
+          key,
+          op,
+          string: dqstr
+        };
+      } else {
+        return error(`Invalid line: '${str}'`);
+      }
+    } else {
+      return error(`Invalid line: '${str}'`);
+    }
+  }
+
+};
 
 // ---------------------------------------------------------------------------
 // Load environment from .env file
@@ -58,9 +131,10 @@ export var loadEnvFile = function(searchDir) {
 // ---------------------------------------------------------------------------
 // Load environment from a string
 export var parseEnv = function(contents) {
-  var tree;
+  var oInput, tree;
   debug("enter parseEnv()");
-  tree = parsePLL(contents, EnvMapper);
+  oInput = new EnvInput(contents);
+  tree = oInput.getTree();
   debug("return from parseEnv() - tree");
   return tree;
 };
@@ -139,76 +213,6 @@ export var procEnv = function(tree) {
     }
   }
   debug("return from procEnv()");
-};
-
-// ---------------------------------------------------------------------------
-export var EnvMapper = function(str) {
-  var _, dqstr, ident, key, lMatches, neg, number, op, sqstr, value;
-  if (lMatches = str.match(/^([A-Za-z_]+)\s*=\s*(.*)$/)) { // identifier
-    [_, key, value] = lMatches;
-    key = key.toUpperCase();
-    value = rtrim(value);
-    return {
-      type: 'assign',
-      key,
-      value
-    };
-  } else if (lMatches = str.match(/^if\s+(?:(not)\s+)?([A-Za-z_]+)$/)) { // identifier
-    [_, neg, key] = lMatches;
-    key = key.toUpperCase();
-    if (neg) {
-      return {
-        type: 'if_falsy',
-        key
-      };
-    } else {
-      return {
-        type: 'if_truthy',
-        key
-      };
-    }
-  } else if (lMatches = str.match(/^if\s+([A-Za-z_]+)\s*(==|!=|>|>=|<|<=)\s*(?:([A-Za-z_]+)|([0-9]+)|'([^']*)'|"([^"]*)")$/)) { // identifier (key)
-    // comparison operator
-    // identifier
-    // number
-    // single quoted string
-    // double quoted string
-    [_, key, op, ident, number, sqstr, dqstr] = lMatches;
-    key = key.toUpperCase();
-    if (ident) {
-      return {
-        type: 'compare_ident',
-        key,
-        op,
-        ident
-      };
-    } else if (number) {
-      return {
-        type: 'compare_number',
-        key,
-        op,
-        number: Number(number)
-      };
-    } else if (sqstr) {
-      return {
-        type: 'compare_string',
-        key,
-        op,
-        string: sqstr
-      };
-    } else if (dqstr) {
-      return {
-        type: 'compare_string',
-        key,
-        op,
-        string: dqstr
-      };
-    } else {
-      return error(`Invalid line: '${str}'`);
-    }
-  } else {
-    return error(`Invalid line: '${str}'`);
-  }
 };
 
 // ---------------------------------------------------------------------------
