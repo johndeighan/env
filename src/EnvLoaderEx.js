@@ -24,11 +24,11 @@ import {
 } from '@jdeighan/coffee-utils/fs';
 
 import {
-  PLLInput
+  PLLParser
 } from '@jdeighan/string-input/pll';
 
 // ---------------------------------------------------------------------------
-export var EnvInput = class EnvInput extends PLLInput {
+export var EnvInput = class EnvInput extends PLLParser {
   mapString(str) {
     var _, dqstr, ident, key, lMatches, neg, number, op, sqstr, value;
     if (lMatches = str.match(/^([A-Za-z_]+)\s*=\s*(.*)$/)) { // identifier

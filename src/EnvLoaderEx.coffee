@@ -13,11 +13,11 @@ import {
 	} from '@jdeighan/coffee-utils'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo} from '@jdeighan/coffee-utils/fs'
-import {PLLInput} from '@jdeighan/string-input/pll'
+import {PLLParser} from '@jdeighan/string-input/pll'
 
 # ---------------------------------------------------------------------------
 
-export class EnvInput extends PLLInput
+export class EnvInput extends PLLParser
 
 	mapString: (str) ->
 
