@@ -115,10 +115,10 @@ export loadEnvFile = (searchDir) ->
 
 export parseEnv = (contents) ->
 
-	debug "enter parseEnv()"
+	debug "enter ENV parseEnv()"
 	oInput = new EnvInput(contents)
 	tree = oInput.getTree()
-	debug "return from parseEnv() - tree"
+	debug "return ENV from parseEnv() - tree"
 	return tree
 
 # ---------------------------------------------------------------------------
@@ -142,19 +142,31 @@ doCompare = (arg1, op, arg2) ->
 			error "doCompare(): Invalid operator '#{op}'"
 
 # ---------------------------------------------------------------------------
+
+replacer = (str) ->
+
+	debug "enter ENV replacer('#{str}')"
+	name = str.substr(1).toUpperCase()
+	debug "ENV name = '#{name}'"
+	result = process.env[name]
+	debug "return ENV with '#{result}'"
+	return result
+
+# ---------------------------------------------------------------------------
 # Load environment from a string
 
 export procEnv = (tree) ->
 
-	debug "enter procEnv() - tree"
+	debug "enter ENV procEnv() - tree"
 	assert isArray(tree), "procEnv(): tree is not an array"
 	for h in tree
 		switch h.node.type
 
 			when 'assign'
 				{key, value} = h.node
+				value = value.replace(/\$[A-Za-z_]+/g, replacer)
 				process.env[key] = value
-				debug "assign #{key} = '#{value}'"
+				debug "ENV procEnv(): assign #{key} = '#{value}'"
 
 			when 'if_truthy'
 				{key} = h.node
@@ -189,7 +201,7 @@ export procEnv = (tree) ->
 				if doCompare(arg1, op, string)
 					procEnv(h.body)
 
-	debug "return from procEnv()"
+	debug "return ENV from procEnv()"
 	return
 
 # ---------------------------------------------------------------------------

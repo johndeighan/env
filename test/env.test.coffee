@@ -16,7 +16,7 @@ import {
 
 dir = mydir(`import.meta.url`)
 
-tester = new AvaTester()
+simple = new AvaTester()
 
 # ---------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ contents = """
 	oInput = new EnvInput(contents)
 	tree = oInput.getTree()
 
-	tester.equal 78, tree, taml("""
+	simple.equal 78, tree, taml("""
 			---
 			-
 				lineNum: 1
@@ -104,7 +104,7 @@ contents = """
 (() ->
 	tree = loadEnvFile(dir)
 
-	tester.equal 100, tree, taml("""
+	simple.equal 100, tree, taml("""
 			---
 			-
 				node:
@@ -146,6 +146,21 @@ contents = """
 	)()
 
 # ---------------------------------------------------------------------------
+# --- test env var replacement
+
+(() ->
+	oInput = new EnvInput("""
+			dir_root = /usr/project
+			dir_data = $dir_root/data
+			""")
+	tree = oInput.getTree()
+	procEnv(tree)
+
+	simple.equal 159, process.env.DIR_DATA, "/usr/project/data"
+
+	)()
+
+# ---------------------------------------------------------------------------
 # --- test if environment is really loaded using .env file
 
 (() ->
@@ -154,8 +169,8 @@ contents = """
 	tree = loadEnvFile(dir)
 	procEnv(tree)
 
-	tester.equal 148, process.env.DEVELOPMENT, 'yes'
-	tester.equal 149, process.env.COLOR, 'magenta'
-	tester.equal 150, process.env.MOOD, 'somber'
+	simple.equal 148, process.env.DEVELOPMENT, 'yes'
+	simple.equal 149, process.env.COLOR, 'magenta'
+	simple.equal 150, process.env.MOOD, 'somber'
 
 	)()
