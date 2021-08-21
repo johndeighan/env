@@ -9,7 +9,6 @@ import {
   undef,
   pass,
   error,
-  warn,
   rtrim,
   isArray
 } from '@jdeighan/coffee-utils';
@@ -114,6 +113,9 @@ export var loadEnvFrom = function(searchDir, rootName = undef) {
   var tree;
   debug("enter loadEnvFrom()");
   tree = loadEnvFile(searchDir, rootName);
+  if (tree == null) {
+    return undef;
+  }
   procEnv(tree);
   debug("return from loadEnvFrom()");
   return tree;
@@ -126,9 +128,8 @@ export var loadEnvFile = function(searchDir, rootName = undef) {
   debug(`enter loadEnvFile('${searchDir}')`);
   filepath = pathTo('.env', searchDir, "up");
   if (filepath == null) {
-    warn(`loadEnvFile('${searchDir}'): No .env file found`);
     debug("return - no .env file found");
-    return;
+    return undef;
   }
   if (rootName) {
     setenv(rootName, filepath);

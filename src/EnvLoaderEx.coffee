@@ -3,13 +3,7 @@
 import assert from 'assert'
 
 import {
-	say,
-	undef,
-	pass,
-	error,
-	warn,
-	rtrim,
-	isArray,
+	say, undef, pass, error, rtrim, isArray,
 	} from '@jdeighan/coffee-utils'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo} from '@jdeighan/coffee-utils/fs'
@@ -101,6 +95,8 @@ export loadEnvFrom = (searchDir, rootName=undef) ->
 
 	debug "enter loadEnvFrom()"
 	tree = loadEnvFile(searchDir, rootName)
+	if not tree?
+		return undef
 	procEnv(tree)
 	debug "return from loadEnvFrom()"
 	return tree
@@ -113,9 +109,8 @@ export loadEnvFile = (searchDir, rootName=undef) ->
 	debug "enter loadEnvFile('#{searchDir}')"
 	filepath = pathTo('.env', searchDir, "up")
 	if not filepath?
-		warn "loadEnvFile('#{searchDir}'): No .env file found"
 		debug "return - no .env file found"
-		return
+		return undef
 	if rootName
 		setenv rootName, filepath
 	contents = slurp(filepath)
