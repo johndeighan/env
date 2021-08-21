@@ -17,6 +17,20 @@ import {PLLParser} from '@jdeighan/string-input/pll'
 
 # ---------------------------------------------------------------------------
 
+setenv = (name, value) ->
+
+	debug "SET ENV '#{name}' = '#{value}'"
+	process.env[name] = value
+	return
+
+# ---------------------------------------------------------------------------
+
+getenv = (name) ->
+
+	return process.env[name]
+
+# ---------------------------------------------------------------------------
+
 export class EnvInput extends PLLParser
 
 	mapString: (str) ->
@@ -103,7 +117,7 @@ export loadEnvFile = (searchDir, rootName=undef) ->
 		debug "return - no .env file found"
 		return
 	if rootName
-		process.env[rootName] = filepath
+		setenv rootName, filepath
 	contents = slurp(filepath)
 	tree = parseEnv(contents)
 	debug "return from loadEnvFile() - tree"
@@ -147,7 +161,7 @@ replacer = (str) ->
 	debug "enter ENV replacer('#{str}')"
 	name = str.substr(1)
 	debug "ENV name = '#{name}'"
-	result = process.env[name]
+	result = getenv(name)
 	debug "return ENV with '#{result}'"
 	return result
 
@@ -164,39 +178,39 @@ export procEnv = (tree) ->
 			when 'assign'
 				{key, value} = h.node
 				value = value.replace(/\$[A-Za-z_]+/g, replacer)
-				process.env[key] = value
+				setenv key, value
 				debug "ENV procEnv(): assign #{key} = '#{value}'"
 
 			when 'if_truthy'
 				{key} = h.node
 				debug "if_truthy: '#{key}'"
-				if process.env[key]
+				if getenv(key)
 					debug "YES: proc body"
 					procEnv(h.body)
 
 			when 'if_falsy'
 				{key} = h.node
 				debug "if_falsy: '#{key}'"
-				if not process.env[key]
+				if not getenv(key)
 					debug "YES: proc body"
 					procEnv(h.body)
 
 			when 'compare_ident'
 				{key, op, ident} = h.node
-				arg1 = process.env[key]
-				arg2 = process.env[ident]
+				arg1 = getenv(key)
+				arg2 = getenv(ident)
 				if doCompare(arg1, op, arg2)
 					procEnv(h.body)
 
 			when 'compare_number'
 				{key, op, number} = h.node
-				arg1 = Number(process.env[key])
+				arg1 = Number(getenv(key))
 				if doCompare(arg1, op, number)
 					procEnv(h.body)
 
 			when 'compare_string'
 				{key, op, string} = h.node
-				arg1 = process.env[key]
+				arg1 = getenv(key)
 				if doCompare(arg1, op, string)
 					procEnv(h.body)
 
