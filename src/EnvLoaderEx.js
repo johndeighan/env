@@ -102,10 +102,10 @@ export var EnvInput = class EnvInput extends PLLParser {
 
 // ---------------------------------------------------------------------------
 // Load environment from .env file
-export var loadEnvFrom = function(searchDir) {
+export var loadEnvFrom = function(searchDir, rootName = undef) {
   var tree;
   debug("enter loadEnvFrom()");
-  tree = loadEnvFile(searchDir);
+  tree = loadEnvFile(searchDir, rootName);
   procEnv(tree);
   debug("return from loadEnvFrom()");
   return tree;
@@ -113,7 +113,7 @@ export var loadEnvFrom = function(searchDir) {
 
 // ---------------------------------------------------------------------------
 // Load environment from a string
-export var loadEnvFile = function(searchDir) {
+export var loadEnvFile = function(searchDir, rootName = undef) {
   var contents, filepath, tree;
   debug(`enter loadEnvFile('${searchDir}')`);
   filepath = pathTo('.env', searchDir, "up");
@@ -121,6 +121,9 @@ export var loadEnvFile = function(searchDir) {
     warn(`loadEnvFile('${searchDir}'): No .env file found`);
     debug("return - no .env file found");
     return;
+  }
+  if (rootName) {
+    process.env[rootName] = filepath;
   }
   contents = slurp(filepath);
   tree = parseEnv(contents);

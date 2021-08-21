@@ -86,10 +86,10 @@ export class EnvInput extends PLLParser
 # ---------------------------------------------------------------------------
 # Load environment from .env file
 
-export loadEnvFrom = (searchDir) ->
+export loadEnvFrom = (searchDir, rootName=undef) ->
 
 	debug "enter loadEnvFrom()"
-	tree = loadEnvFile(searchDir)
+	tree = loadEnvFile(searchDir, rootName)
 	procEnv(tree)
 	debug "return from loadEnvFrom()"
 	return tree
@@ -97,7 +97,7 @@ export loadEnvFrom = (searchDir) ->
 # ---------------------------------------------------------------------------
 # Load environment from a string
 
-export loadEnvFile = (searchDir) ->
+export loadEnvFile = (searchDir, rootName=undef) ->
 
 	debug "enter loadEnvFile('#{searchDir}')"
 	filepath = pathTo('.env', searchDir, "up")
@@ -105,6 +105,8 @@ export loadEnvFile = (searchDir) ->
 		warn "loadEnvFile('#{searchDir}'): No .env file found"
 		debug "return - no .env file found"
 		return
+	if rootName
+		process.env[rootName] = filepath
 	contents = slurp(filepath)
 	tree = parseEnv(contents)
 	debug "return from loadEnvFile() - tree"
