@@ -33,7 +33,6 @@ export var EnvInput = class EnvInput extends PLLParser {
     var _, dqstr, ident, key, lMatches, neg, number, op, sqstr, value;
     if (lMatches = str.match(/^([A-Za-z_]+)\s*=\s*(.*)$/)) { // identifier
       [_, key, value] = lMatches;
-      key = key.toUpperCase();
       value = rtrim(value);
       return {
         type: 'assign',
@@ -42,7 +41,6 @@ export var EnvInput = class EnvInput extends PLLParser {
       };
     } else if (lMatches = str.match(/^if\s+(?:(not)\s+)?([A-Za-z_]+)$/)) { // identifier
       [_, neg, key] = lMatches;
-      key = key.toUpperCase();
       if (neg) {
         return {
           type: 'if_falsy',
@@ -61,7 +59,6 @@ export var EnvInput = class EnvInput extends PLLParser {
       // single quoted string
       // double quoted string
       [_, key, op, ident, number, sqstr, dqstr] = lMatches;
-      key = key.toUpperCase();
       if (ident) {
         return {
           type: 'compare_ident',
@@ -166,7 +163,7 @@ doCompare = function(arg1, op, arg2) {
 replacer = function(str) {
   var name, result;
   debug(`enter ENV replacer('${str}')`);
-  name = str.substr(1).toUpperCase();
+  name = str.substr(1);
   debug(`ENV name = '${name}'`);
   result = process.env[name];
   debug(`return ENV with '${result}'`);

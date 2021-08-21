@@ -60,55 +60,55 @@ if not development
 	lineNum: 1
 	node:
 		type: assign
-		key: DEVELOPMENT
+		key: development
 		value: 'yes'
 -
 	lineNum: 2
 	node:
 		type: if_truthy
-		key: DEVELOPMENT
+		key: development
 	body:
 		-
 			lineNum: 3
 			node:
 				type: assign
-				key: COLOR
+				key: color
 				value: red
 		-
 			lineNum: 4
 			node:
 				type: if_truthy
-				key: USEMOODS
+				key: usemoods
 			body:
 				-
 					lineNum: 5
 					node:
 						type: assign
-						key: MOOD
+						key: mood
 						value: somber
 -
 	lineNum: 6
 	node:
 		type: if_falsy
-		key: DEVELOPMENT
+		key: development
 	body:
 		-
 			lineNum: 7
 			node:
 				type: assign
-				key: COLOR
+				key: color
 				value: blue
 		-
 			lineNum: 8
 			node:
 				type: if_truthy
-				key: USEMOODS
+				key: usemoods
 			body:
 				-
 					lineNum: 9
 					node:
 						type: assign
-						key: MOOD
+						key: mood
 						value: happy`));
 })();
 
@@ -121,37 +121,37 @@ if not development
 -
 	node:
 		type: if_truthy
-		key: DEVELOPMENT
+		key: development
 	lineNum: 1
 	body:
 		-
 			node:
 				type: assign
-				key: COLOR
+				key: color
 				value: magenta
 			lineNum: 2
 		-
 			node:
 				type: assign
-				key: MOOD
+				key: mood
 				value: somber
 			lineNum: 3
 -
 	node:
 		type: if_falsy
-		key: DEVELOPMENT
+		key: development
 	lineNum: 4
 	body:
 		-
 			node:
 				type: assign
-				key: COLOR
+				key: color
 				value: azure
 			lineNum: 5
 		-
 			node:
 				type: assign
-				key: MOOD
+				key: mood
 				value: happy
 			lineNum: 6`));
 })();
@@ -164,17 +164,17 @@ if not development
 dir_data = $dir_root/data`);
   tree = oInput.getTree();
   procEnv(tree);
-  return simple.equal(159, process.env.DIR_DATA, "/usr/project/data");
+  return simple.equal(159, process.env.dir_data, "/usr/project/data");
 })();
 
 // ---------------------------------------------------------------------------
 // --- test if environment is really loaded using .env file
 (function() {
   var tree;
-  process.env['DEVELOPMENT'] = 'yes';
+  process.env.development = 'yes';
   tree = loadEnvFile(dir);
   procEnv(tree);
-  simple.equal(148, process.env.DEVELOPMENT, 'yes');
-  simple.equal(149, process.env.COLOR, 'magenta');
-  return simple.equal(150, process.env.MOOD, 'somber');
+  simple.equal(148, process.env.development, 'yes');
+  simple.equal(149, process.env.color, 'magenta');
+  return simple.equal(150, process.env.mood, 'somber');
 })();

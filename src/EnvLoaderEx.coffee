@@ -29,7 +29,6 @@ export class EnvInput extends PLLParser
 				(.*)
 				$///)
 			[_, key, value] = lMatches
-			key = key.toUpperCase()
 			value = rtrim(value)
 			return {type: 'assign', key, value}
 		else if lMatches = str.match(///^
@@ -42,7 +41,6 @@ export class EnvInput extends PLLParser
 				([A-Za-z_]+)      # identifier
 				$///)
 			[_, neg, key] = lMatches
-			key = key.toUpperCase()
 			if neg
 				return {type: 'if_falsy', key}
 			else
@@ -69,7 +67,6 @@ export class EnvInput extends PLLParser
 					)
 				$///)
 			[_, key, op, ident, number, sqstr, dqstr] = lMatches
-			key = key.toUpperCase()
 			if ident
 				return {type: 'compare_ident', key, op, ident}
 			else if number
@@ -148,7 +145,7 @@ doCompare = (arg1, op, arg2) ->
 replacer = (str) ->
 
 	debug "enter ENV replacer('#{str}')"
-	name = str.substr(1).toUpperCase()
+	name = str.substr(1)
 	debug "ENV name = '#{name}'"
 	result = process.env[name]
 	debug "return ENV with '#{result}'"
