@@ -5,13 +5,10 @@ import {strict as assert} from 'assert'
 import {AvaTester} from '@jdeighan/ava-tester'
 import {say, undef, pass, taml} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
-import {mydir} from '@jdeighan/coffee-utils/fs'
+import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
 import {
-	EnvInput,
-	loadEnvFrom,
-	loadEnvFile,
-	parseEnv,
-	procEnv,
+	setenv, getenv, clearenv,
+	EnvInput, loadEnvFrom, loadEnvFile, loadEnvString, procEnv,
 	} from '@jdeighan/env'
 
 dir = mydir(`import.meta.url`)
@@ -19,8 +16,10 @@ dir = mydir(`import.meta.url`)
 simple = new AvaTester()
 
 # ---------------------------------------------------------------------------
+# --- test using EnvInput
 
-contents = """
+(() ->
+	oInput = new EnvInput("""
 		development = yes
 		if development
 			color = red
@@ -30,13 +29,7 @@ contents = """
 			color = blue
 			if usemoods
 				mood = happy
-		"""
-
-# ---------------------------------------------------------------------------
-# --- test using EnvInput
-
-(() ->
-	oInput = new EnvInput(contents)
+			""")
 	tree = oInput.getTree()
 
 	simple.equal 78, tree, taml("""
@@ -102,9 +95,12 @@ contents = """
 # --- test using .env file
 
 (() ->
-	tree = loadEnvFile(dir)
+	filepath = pathTo('.env', dir, "up")
+	contents = slurp(filepath)
+	oInput = new EnvInput(contents)
+	tree = oInput.getTree()
 
-	simple.equal 100, tree, taml("""
+	expect = taml("""
 			---
 			-
 				node:
@@ -143,6 +139,8 @@ contents = """
 							value: happy
 						lineNum: 6
 			""")
+
+	simple.equal 100, tree, expect
 	)()
 
 # ---------------------------------------------------------------------------
@@ -156,7 +154,7 @@ contents = """
 	tree = oInput.getTree()
 	procEnv(tree)
 
-	simple.equal 159, process.env.dir_data, "/usr/project/data"
+	simple.equal 159, getenv('dir_data'), "/usr/project/data"
 
 	)()
 
@@ -164,13 +162,33 @@ contents = """
 # --- test if environment is really loaded using .env file
 
 (() ->
-	process.env.development = 'yes'
+	setenv('development', 'yes')
 
-	tree = loadEnvFile(dir)
-	procEnv(tree)
+	loadEnvFrom(dir)
 
-	simple.equal 148, process.env.development, 'yes'
-	simple.equal 149, process.env.color, 'magenta'
-	simple.equal 150, process.env.mood, 'somber'
+	simple.equal 148, getenv('development'), 'yes'
+	simple.equal 149, getenv('color'), 'magenta'
+	simple.equal 150, getenv('mood'), 'somber'
 
 	)()
+
+# ---------------------------------------------------------------------------
+# --- test prefix
+
+(() ->
+	clearenv 'dir_root','sb.indent','dir_data','sb.dev'
+
+	loadEnvString("""
+			dir_root = /usr/project
+			sb.indent = 3
+			dir_data = /usr/project/data
+			sb.dev = yes
+			""", 'sb.')
+
+	simple.equal 188, getenv('dir_root'), undef
+	simple.equal 189, getenv('sb.indent'), '3'
+	simple.equal 190, getenv('dir_data'), undef
+	simple.equal 191, getenv('sb.dev'), 'yes'
+
+	)()
+

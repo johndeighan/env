@@ -1,6 +1,6 @@
 # EnvLoaderEx.coffee
 
-import assert from 'assert'
+import {strict as assert} from 'assert'
 
 import {
 	say, undef, pass, error, rtrim, isArray,
@@ -11,7 +11,7 @@ import {PLLParser} from '@jdeighan/string-input/pll'
 
 # ---------------------------------------------------------------------------
 
-setenv = (name, value) ->
+export setenv = (name, value) ->
 
 	debug "SET ENV '#{name}' = '#{value}'"
 	process.env[name] = value
@@ -19,24 +19,40 @@ setenv = (name, value) ->
 
 # ---------------------------------------------------------------------------
 
-getenv = (name) ->
+export getenv = (name) ->
 
+	debug "GET ENV '#{name}'"
 	return process.env[name]
+
+# ---------------------------------------------------------------------------
+
+export clearenv = (...lNames) ->
+
+	debug "CLEAR ENV #{lNames.join(', ')}"
+	for name in lNames
+		delete process.env[name]
+	return
 
 # ---------------------------------------------------------------------------
 
 export class EnvInput extends PLLParser
 
+	constructor: (string, @prefix) ->
+
+		super string
+
 	mapString: (str) ->
 
 		if lMatches = str.match(///^
-				([A-Za-z_]+)      # identifier
+				([A-Za-z_\.]+)      # identifier
 				\s*
 				=
 				\s*
 				(.*)
 				$///)
 			[_, key, value] = lMatches
+			if @prefix && (key.indexOf(@prefix) != 0)
+				return undef
 			value = rtrim(value)
 			return {type: 'assign', key, value}
 		else if lMatches = str.match(///^
@@ -89,45 +105,57 @@ export class EnvInput extends PLLParser
 			error "Invalid line: '#{str}'"
 
 # ---------------------------------------------------------------------------
-# Load environment from .env file
 
-export loadEnvFrom = (searchDir, rootName=undef) ->
+getdir = (fullpath) ->
+	# --- Works only if file name is '.env'
 
-	debug "enter loadEnvFrom()"
-	tree = loadEnvFile(searchDir, rootName)
-	if not tree?
-		return undef
-	procEnv(tree)
-	debug "return from loadEnvFrom()"
-	return tree
+	len = fullpath.length
+	return fullpath.substring(0, len-5)
 
 # ---------------------------------------------------------------------------
-# Load environment from a string
+# Load environment from .env file
 
-export loadEnvFile = (searchDir, rootName=undef) ->
+export loadEnvFrom = (searchDir, hOptions={}) ->
+	# --- Valid options:
+	#     recurse - load all .env files found by searching up
+	#     prefix - load only env vars with the given prefix
 
-	debug "enter loadEnvFile('#{searchDir}')"
+	debug "enter loadEnvFrom()"
+	{recurse, prefix} = hOptions
 	filepath = pathTo('.env', searchDir, "up")
 	if not filepath?
 		debug "return - no .env file found"
-		return undef
-	if rootName
-		setenv rootName, filepath
-	contents = slurp(filepath)
-	tree = parseEnv(contents)
-	debug "return from loadEnvFile() - tree"
-	return tree
+		return
+	loadEnvFile filepath, prefix
+	if not recurse
+		debug "return from loadEnvFrom()"
+		return
+	while filepath = pathTo('.env', getdir(filepath), "up")
+		loadEnvFile filepath, prefix
+	debug "return from loadEnvFrom()"
+	return
 
 # ---------------------------------------------------------------------------
 # Load environment from a string
 
-export parseEnv = (contents) ->
+export loadEnvFile = (filepath, prefix=undef) ->
 
-	debug "enter ENV parseEnv()"
-	oInput = new EnvInput(contents)
+	debug "enter loadEnvFile('#{filepath}')"
+	loadEnvString slurp(filepath), prefix
+	debug "return from loadEnvFile()"
+	return
+
+# ---------------------------------------------------------------------------
+# Load environment from a string
+
+export loadEnvString = (contents, prefix=undef) ->
+
+	debug "enter loadEnvString()"
+	oInput = new EnvInput(contents, prefix)
 	tree = oInput.getTree()
-	debug "return ENV from parseEnv() - tree"
-	return tree
+	procEnv tree
+	debug "return from loadEnvString()"
+	return
 
 # ---------------------------------------------------------------------------
 
@@ -153,11 +181,11 @@ doCompare = (arg1, op, arg2) ->
 
 replacer = (str) ->
 
-	debug "enter ENV replacer('#{str}')"
+	debug "enter replacer('#{str}')"
 	name = str.substr(1)
-	debug "ENV name = '#{name}'"
+	debug "name = '#{name}'"
 	result = getenv(name)
-	debug "return ENV with '#{result}'"
+	debug "return with '#{result}'"
 	return result
 
 # ---------------------------------------------------------------------------
@@ -165,7 +193,7 @@ replacer = (str) ->
 
 export procEnv = (tree) ->
 
-	debug "enter ENV procEnv() - tree"
+	debug "enter procEnv() - tree"
 	assert isArray(tree), "procEnv(): tree is not an array"
 	for h in tree
 		switch h.node.type
@@ -174,7 +202,7 @@ export procEnv = (tree) ->
 				{key, value} = h.node
 				value = value.replace(/\$[A-Za-z_]+/g, replacer)
 				setenv key, value
-				debug "ENV procEnv(): assign #{key} = '#{value}'"
+				debug "procEnv(): assign #{key} = '#{value}'"
 
 			when 'if_truthy'
 				{key} = h.node
@@ -209,7 +237,7 @@ export procEnv = (tree) ->
 				if doCompare(arg1, op, string)
 					procEnv(h.body)
 
-	debug "return ENV from procEnv()"
+	debug "return from procEnv()"
 	return
 
 # ---------------------------------------------------------------------------
