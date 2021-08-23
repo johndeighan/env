@@ -5,13 +5,20 @@ import {
 } from 'assert';
 
 import {
+  dirname,
+  resolve,
+  parse as parse_fname
+} from 'path';
+
+import {
   say,
   undef,
   pass,
   error,
   rtrim,
   isArray,
-  isFunction
+  isFunction,
+  rtrunc
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -300,7 +307,7 @@ export var loadEnvString = function(contents, hOptions = {}) {
 // ---------------------------------------------------------------------------
 // Load environment from .env file
 export var loadEnvFrom = function(searchDir, hOptions = {}) {
-  var env, filepath;
+  var dir, env, filepath;
   // --- Valid options:
   //     recurse - load all .env files found by searching up
   //     rootName - env var name of first .env file found
@@ -308,20 +315,22 @@ export var loadEnvFrom = function(searchDir, hOptions = {}) {
   debug("enter loadEnvFrom()");
   filepath = pathTo('.env', searchDir, "up");
   assert(filepath != null, "No .env file found");
+  dir = rtrunc(filepath, 5);
   if (hOptions.rootName) {
     if (!hOptions.hInitialVars) {
       hOptions.hInitialVars = {};
     }
-    hOptions.hInitialVars[hOptions.rootName] = filepath;
+    hOptions.hInitialVars[hOptions.rootName] = dir;
   }
   env = loadEnvFile(filepath, hOptions);
   if (!hOptions.recurse) {
     debug("return from loadEnvFrom()");
     return env;
   }
-  while (filepath = pathTo('.env', filepath.substring(0, filepath.length - 5), "up")) {
+  while (filepath = pathTo('.env', resolve(dir, '..'), "up")) {
     debug(`Also load ${filepath}`);
-    env = loadEnvFile(filepath, prefix);
+    env = loadEnvFile(filepath, hOptions);
+    dir = rtrunc(filepath, 5);
   }
   debug("return from loadEnvFrom()");
   return env;

@@ -1,9 +1,10 @@
 # EnvLoaderEx.coffee
 
 import {strict as assert} from 'assert'
+import {dirname, resolve, parse as parse_fname} from 'path';
 
 import {
-	say, undef, pass, error, rtrim, isArray, isFunction,
+	say, undef, pass, error, rtrim, isArray, isFunction, rtrunc,
 	} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo} from '@jdeighan/coffee-utils/fs'
@@ -294,17 +295,19 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 	debug "enter loadEnvFrom()"
 	filepath = pathTo('.env', searchDir, "up")
 	assert filepath?, "No .env file found"
+	dir = rtrunc(filepath, 5)
 	if hOptions.rootName
 		if not hOptions.hInitialVars
 			hOptions.hInitialVars = {}
-		hOptions.hInitialVars[hOptions.rootName] = filepath
+		hOptions.hInitialVars[hOptions.rootName] = dir
 
 	env = loadEnvFile filepath, hOptions
 	if not hOptions.recurse
 		debug "return from loadEnvFrom()"
 		return env
-	while filepath = pathTo('.env', filepath.substring(0, filepath.length-5), "up")
+	while filepath = pathTo('.env', resolve(dir, '..'), "up")
 		debug "Also load #{filepath}"
-		env = loadEnvFile filepath, prefix
+		env = loadEnvFile filepath, hOptions
+		dir = rtrunc(filepath, 5)
 	debug "return from loadEnvFrom()"
 	return env
