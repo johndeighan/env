@@ -258,3 +258,17 @@ dir_data = $dir_root/data`, {hCallbacks});
   simple.equal(263, env.getVar('dir_data'), '/usr/project/data');
   return simple.same_list(264, env.names(), ['dev', 'dir_root', 'dir_data']);
 })();
+
+// ---------------------------------------------------------------------------
+// --- test hInitialVars
+(function() {
+  var env;
+  delete process.env['dir_root'];
+  delete process.env['dir_data'];
+  env = loadEnvString(`dir_data = $dir_root/data`, {
+    hInitialVars: {
+      "dir_root": "/usr/project"
+    }
+  });
+  return simple.equal(283, env.getVar('dir_data'), '/usr/project/data');
+})();

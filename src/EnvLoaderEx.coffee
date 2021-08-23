@@ -14,6 +14,13 @@ import {PLLParser} from '@jdeighan/string-input/pll'
 export class EnvLoader extends PLLParser
 
 	constructor: (contents, @hOptions={}) ->
+		# --- Valid options:
+		#        hInitialVars - hash of initial env var values
+		#        prefix - load only vars with this prefix
+		#        stripPrefix - remove the prefix before setting vars
+		#        hCallbacks - callbacks to replace:
+		#                     getVar, setVar, clearVar, names
+
 
 		super contents
 
@@ -22,6 +29,9 @@ export class EnvLoader extends PLLParser
 
 		@hCallbacks = @hOptions.hCallbacks
 		@checkCallbacks()
+		if @hOptions.hInitialVars
+			for key,value of @hOptions.hInitialVars
+				@setVar key, value
 
 	# ..........................................................
 
@@ -277,11 +287,17 @@ getdir = (fullpath) ->
 export loadEnvFrom = (searchDir, hOptions={}) ->
 	# --- Valid options:
 	#     recurse - load all .env files found by searching up
+	#     rootName - env var name of first .env file found
 	#     any option accepted by EndLoader
 
 	debug "enter loadEnvFrom()"
 	filepath = pathTo('.env', searchDir, "up")
 	assert filepath?, "No .env file found"
+	if hOptions.rootName
+		if not hOptions.hInitialVars
+			hOptions.hInitialVars = {}
+		hOptions.hInitialVars[hOptions.rootName] = filepath
+
 	env = loadEnvFile filepath, hOptions
 	if not hOptions.recurse
 		debug "return from loadEnvFrom()"

@@ -264,3 +264,22 @@ simple = new AvaTester()
 	simple.same_list 264, env.names(),  ['dev','dir_root','dir_data']
 
 	)()
+
+# ---------------------------------------------------------------------------
+# --- test hInitialVars
+
+(() ->
+	delete process.env['dir_root']
+	delete process.env['dir_data']
+
+	env = loadEnvString("""
+			dir_data = $dir_root/data
+			""", {
+			hInitialVars: {
+				"dir_root": "/usr/project",
+				}
+			})
+
+	simple.equal 283, env.getVar('dir_data'),  '/usr/project/data'
+
+	)()

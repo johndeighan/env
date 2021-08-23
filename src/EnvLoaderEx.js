@@ -33,12 +33,20 @@ import {
 // ---------------------------------------------------------------------------
 export var EnvLoader = class EnvLoader extends PLLParser {
   constructor(contents, hOptions1 = {}) {
+    var key, ref, value;
     super(contents);
     this.hOptions = hOptions1;
     this.prefix = this.hOptions.prefix;
     this.stripPrefix = this.hOptions.stripPrefix;
     this.hCallbacks = this.hOptions.hCallbacks;
     this.checkCallbacks();
+    if (this.hOptions.hInitialVars) {
+      ref = this.hOptions.hInitialVars;
+      for (key in ref) {
+        value = ref[key];
+        this.setVar(key, value);
+      }
+    }
   }
 
   // ..........................................................
@@ -294,10 +302,17 @@ export var loadEnvFrom = function(searchDir, hOptions = {}) {
   var env, filepath;
   // --- Valid options:
   //     recurse - load all .env files found by searching up
+  //     rootName - env var name of first .env file found
   //     any option accepted by EndLoader
   debug("enter loadEnvFrom()");
   filepath = pathTo('.env', searchDir, "up");
   assert(filepath != null, "No .env file found");
+  if (hOptions.rootName) {
+    if (!hOptions.hInitialVars) {
+      hOptions.hInitialVars = {};
+    }
+    hOptions.hInitialVars[hOptions.rootName] = filepath;
+  }
   env = loadEnvFile(filepath, hOptions);
   if (!hOptions.recurse) {
     debug("return from loadEnvFrom()");
