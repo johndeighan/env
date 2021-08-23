@@ -90,6 +90,15 @@ export class EnvLoader extends PLLParser
 
 	# ..........................................................
 
+	dump: () ->
+
+		say "=== Environment Variables: ==="
+		for name in @names()
+			say "   #{name} = '#{@getVar(name)}'"
+		return
+
+	# ..........................................................
+
 	mapString: (str) ->
 
 		if lMatches = str.match(///^
@@ -274,14 +283,6 @@ export loadEnvString = (contents, hOptions={}) ->
 	return env
 
 # ---------------------------------------------------------------------------
-
-getdir = (fullpath) ->
-	# --- Works only if file name is '.env'
-
-	len = fullpath.length
-	return fullpath.substring(0, len-5)
-
-# ---------------------------------------------------------------------------
 # Load environment from .env file
 
 export loadEnvFrom = (searchDir, hOptions={}) ->
@@ -302,7 +303,7 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 	if not hOptions.recurse
 		debug "return from loadEnvFrom()"
 		return env
-	while filepath = pathTo('.env', getdir(filepath), "up")
+	while filepath = pathTo('.env', filepath.substring(0, filepath.length-5), "up")
 		debug "Also load #{filepath}"
 		env = loadEnvFile filepath, prefix
 	debug "return from loadEnvFrom()"
