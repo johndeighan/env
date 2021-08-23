@@ -7,19 +7,18 @@ import {say, undef, pass, taml} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
 import {
-	setenv, getenv, clearenv,
-	EnvInput, loadEnvFrom, loadEnvFile, loadEnvString, procEnv,
+	EnvLoader, loadEnvFrom, loadEnvFile, loadEnvString,
 	} from '@jdeighan/env'
 
-dir = mydir(`import.meta.url`)
+dir = mydir(`import.meta.url`)  # directory this file is in
 
 simple = new AvaTester()
 
 # ---------------------------------------------------------------------------
-# --- test using EnvInput
+# --- test using EnvLoader
 
 (() ->
-	oInput = new EnvInput("""
+	env = new EnvLoader("""
 		development = yes
 		if development
 			color = red
@@ -30,9 +29,10 @@ simple = new AvaTester()
 			if usemoods
 				mood = happy
 			""")
-	tree = oInput.getTree()
 
-	simple.equal 78, tree, taml("""
+	tree = env.getTree()
+
+	simple.equal 35, tree, taml("""
 			---
 			-
 				lineNum: 1
@@ -97,10 +97,10 @@ simple = new AvaTester()
 (() ->
 	filepath = pathTo('.env', dir, "up")
 	contents = slurp(filepath)
-	oInput = new EnvInput(contents)
-	tree = oInput.getTree()
+	env = new EnvLoader(contents)
+	tree = env.getTree()
 
-	expect = taml("""
+	simple.equal 103, tree, taml("""
 			---
 			-
 				node:
@@ -140,35 +140,42 @@ simple = new AvaTester()
 						lineNum: 6
 			""")
 
-	simple.equal 100, tree, expect
 	)()
 
 # ---------------------------------------------------------------------------
 # --- test env var replacement
 
 (() ->
-	oInput = new EnvInput("""
+	env = new EnvLoader("""
 			dir_root = /usr/project
 			dir_data = $dir_root/data
 			""")
-	tree = oInput.getTree()
-	procEnv(tree)
+	env.load()
 
-	simple.equal 159, getenv('dir_data'), "/usr/project/data"
+	simple.equal 155, env.getVar('dir_data'), "/usr/project/data"
 
 	)()
 
 # ---------------------------------------------------------------------------
 # --- test if environment is really loaded using .env file
+#
+# Contents of .env file:
+#   if development
+#      color = magenta
+#      mood = somber
+#   if not development
+#      color = azure
+#      mood = happy
 
 (() ->
-	setenv('development', 'yes')
+	process.env.development = 'yes'
 
-	loadEnvFrom(dir)
+	env = loadEnvFrom(dir)
+	assert env?, "env is undefined on line 174"
 
-	simple.equal 148, getenv('development'), 'yes'
-	simple.equal 149, getenv('color'), 'magenta'
-	simple.equal 150, getenv('mood'), 'somber'
+	simple.equal 176, env.getVar('development'), 'yes'
+	simple.equal 177, env.getVar('color'), 'magenta'
+	simple.equal 178, env.getVar('mood'), 'somber'
 
 	)()
 
@@ -176,19 +183,84 @@ simple = new AvaTester()
 # --- test prefix
 
 (() ->
-	clearenv 'dir_root','sb.indent','dir_data','sb.dev'
+	delete process.env['dir_root']
+	delete process.env['sb.indent']
+	delete process.env['dir_data']
+	delete process.env['sb.dev']
 
-	loadEnvString("""
+	env = loadEnvString("""
 			dir_root = /usr/project
 			sb.indent = 3
 			dir_data = /usr/project/data
 			sb.dev = yes
-			""", 'sb.')
+			""", {
+			prefix: 'sb.',
+			})
 
-	simple.equal 188, getenv('dir_root'), undef
-	simple.equal 189, getenv('sb.indent'), '3'
-	simple.equal 190, getenv('dir_data'), undef
-	simple.equal 191, getenv('sb.dev'), 'yes'
+	simple.equal 200, env.getVar('dir_root'),  undef
+	simple.equal 201, env.getVar('sb.indent'), '3'
+	simple.equal 202, env.getVar('dir_data'),  undef
+	simple.equal 203, env.getVar('sb.dev'),   'yes'
 
 	)()
 
+# ---------------------------------------------------------------------------
+# --- test prefix with stripPrefix option
+
+(() ->
+	delete process.env['dir_root']
+	delete process.env['sb.indent']
+	delete process.env['indent']
+	delete process.env['dir_data']
+	delete process.env['sb.dev']
+	delete process.env['dev']
+
+	env = loadEnvString("""
+			dir_root = /usr/project
+			sb.indent = 3
+			dir_data = /usr/project/data
+			sb.dev = yes
+			""", {
+			prefix: 'sb.',
+			stripPrefix: true,
+			})
+
+	simple.equal 226, env.getVar('dir_root'),  undef
+	simple.equal 227, env.getVar('sb.indent'), undef
+	simple.equal 228, env.getVar('indent'),    '3'
+
+	simple.equal 229, env.getVar('dir_data'),  undef
+	simple.equal 230, env.getVar('sb.dev'),    undef
+	simple.equal 231, env.getVar('dev'),       'yes'
+
+	)()
+# ---------------------------------------------------------------------------
+# --- test hCallbacks
+
+(() ->
+
+	hVariables = {}
+	hCallbacks = {
+		getVar: (name) ->
+			return hVariables[name]
+		setVar: (name, value) ->
+			hVariables[name] = value
+		clearVar: (name) ->
+			delete hVariables[name]
+		names: () ->
+			return Object.keys(hVariables)
+		}
+
+	env = loadEnvString("""
+			dev = yes
+			dir_root = /usr/project
+			dir_data = $dir_root/data
+			""", {
+				hCallbacks
+				})
+
+	simple.equal     262, env.getVar('dir_root'),  '/usr/project'
+	simple.equal     263, env.getVar('dir_data'), '/usr/project/data'
+	simple.same_list 264, env.names(),  ['dev','dir_root','dir_data']
+
+	)()
