@@ -41,11 +41,7 @@ import {
 
 dir = mydir(import.meta.url); // directory this file is in
 
-say(`dir = '${dir}'`);
-
 root_dir = resolve(dir, '..');
-
-say(`root_dir = '${root_dir}'`);
 
 simple = new AvaTester();
 
