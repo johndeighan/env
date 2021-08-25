@@ -20,7 +20,7 @@ export class EnvLoader extends PLLParser
 		#        prefix - load only vars with this prefix
 		#        stripPrefix - remove the prefix before setting vars
 		#        hCallbacks - callbacks to replace:
-		#                     getVar, setVar, clearVar, names
+		#                     getVar, setVar, clearVar, clearAll, names
 
 
 		super contents
@@ -39,14 +39,12 @@ export class EnvLoader extends PLLParser
 	checkCallbacks: () ->
 
 		if @hCallbacks?
-			assert isFunction(@hCallbacks.getVar),
-				"checkCallbacks: no getVar"
-			assert isFunction(@hCallbacks.setVar),
-				"checkCallbacks: no setVar"
-			assert isFunction(@hCallbacks.clearVar),
-				"checkCallbacks: no clearVar"
-			assert isFunction(@hCallbacks.names),
-				"checkCallbacks: no names"
+			lMissing = []
+			for name in ['getVar','setVar','clearVar','clearAll','names']
+				if not isFunction(@hCallbacks[name])
+					lMissing.push(name)
+			if (lMissing.length > 0)
+				error "Missing callbacks: #{lMissing.join(',')}"
 		return
 
 	# ..........................................................
@@ -77,6 +75,16 @@ export class EnvLoader extends PLLParser
 			@hCallbacks.clearVar name
 		else
 			delete process.env[name]
+		return
+
+	# ..........................................................
+
+	clearAll: () ->
+
+		if @hCallbacks
+			@hCallbacks.clearAll
+		else
+			process.env = {}
 		return
 
 	# ..........................................................
@@ -136,57 +144,99 @@ export class EnvLoader extends PLLParser
 		else if lMatches = str.match(///^
 				if
 				\s+
-				([A-Za-z_]+)      # identifier (key)
+				([A-Za-z_][A-Za-z0-9_]*)      # identifier (key)
 				\s*
 				(
-					  ==           # comparison operator
-					| !=
+					  is           # comparison operator
+					| isnt
 					| >
 					| >=
 					| <
 					| <=
 					)
 				\s*
-				(?:
-					  ([A-Za-z_]+)      # identifier
-					| ([0-9]+)          # number
-					| ' ([^']*) '       # single quoted string
-					| " ([^"]*) "       # double quoted string
-					)
+				(.*)
 				$///)
-			[_, key, op, ident, number, sqstr, dqstr] = lMatches
-			if ident
-				return {type: 'compare_ident', key, op, ident}
-			else if number
-				return {type: 'compare_number', key, op, number: Number(number)}
-			else if sqstr
-				return {type: 'compare_string', key, op, string: sqstr}
-			else if dqstr
-				return {type: 'compare_string', key, op, string: dqstr}
-			else
-				error "Invalid line: '#{str}'"
+			[_, key, op, value] = lMatches
+			return {type: 'compare', key, op, value: value.trim()}
 		else
 			error "Invalid line: '#{str}'"
 
 	# ..........................................................
 
+	expand: (str) ->
+
+		# --- NOTE: Must use => here, not -> so that "this" is set correctly
+		replacer = (str) => return @getVar(str.substr(1))
+		return str.replace(/\$[A-Za-z_][A-Za-z0-9_]*/g, replacer)
+
+	# ..........................................................
+
 	doCompare: (arg1, op, arg2) ->
 
+		arg1 = @getVar(arg1)
+		arg2 = @expand(arg2)
 		switch op
-			when '=='
+			when 'is'
 				return (arg1 == arg2)
-			when '!='
+			when 'isnt'
 				return (arg1 != arg2)
 			when '<'
-				return (arg1 < arg2)
+				return (Number(arg1) < Number(arg2))
 			when '<='
-				return (arg1 <= arg2)
+				return (Number(arg1) <= Number(arg2))
 			when '>'
-				return (arg1 > arg2)
+				return (Number(arg1) > Number(arg2))
 			when '>='
-				return (arg1 >= arg2)
+				return (Number(arg1) >= Number(arg2))
 			else
 				error "doCompare(): Invalid operator '#{op}'"
+
+	# ..........................................................
+
+	procEnv: (tree) ->
+
+		debug "enter procEnv()"
+		debug tree, "TREE:"
+
+		for h in tree
+			switch h.node.type
+
+				when 'assign'
+					{key, value} = h.node
+					value = @expand(value)
+					@setVar key, value
+					debug "procEnv(): assign #{key} = '#{value}'"
+
+				when 'if_truthy'
+					{key} = h.node
+					debug "if_truthy: '#{key}'"
+					if @getVar(key)
+						debug "procEnv(): if_truthy('#{key}') - proc body"
+						@procEnv(h.body)
+					else
+						debug "procEnv(): if_truthy('#{key}') - skip"
+
+				when 'if_falsy'
+					{key} = h.node
+					debug "if_falsy: '#{key}'"
+					if @getVar(key)
+						debug "procEnv(): if_falsy('#{key}') - skip"
+					else
+						debug "procEnv(): if_falsy('#{key}') - proc body"
+						@procEnv(h.body)
+
+				when 'compare'
+					{key, op, value} = h.node
+					debug "procEnv(key=#{key}, value=#{value})"
+					if @doCompare(key, op, value)
+						debug "procEnv(): compare('#{key}','#{value}') - proc body"
+						@procEnv(h.body)
+					else
+						debug "procEnv(): compare('#{key}','#{value}') - skip"
+
+		debug "return from procEnv()"
+		return
 
 	# ..........................................................
 
@@ -200,77 +250,14 @@ export class EnvLoader extends PLLParser
 		debug "return from load()"
 		return
 
-	procEnv: (tree) ->
-
-		debug "enter procEnv()"
-		debug tree, "TREE:"
-
-		# --- NOTE: Must use => here, not ->
-		#           so that "this" is set correctly
-		replacer = (str) =>
-
-			debug "enter replacer('#{str}')"
-			name = str.substr(1)
-			debug "name = '#{name}'"
-			result = @getVar(name)
-			debug "return with '#{result}'"
-			return result
-
-		for h in tree
-			switch h.node.type
-
-				when 'assign'
-					{key, value} = h.node
-					value = value.replace(/\$[A-Za-z_]+/g, replacer)
-					@setVar key, value
-					debug "procEnv(): assign #{key} = '#{value}'"
-
-				when 'if_truthy'
-					{key} = h.node
-					debug "if_truthy: '#{key}'"
-					if @getVar(key)
-						debug "YES: proc body"
-						@procEnv(h.body)
-
-				when 'if_falsy'
-					{key} = h.node
-					debug "if_falsy: '#{key}'"
-					if not @getVar(key)
-						debug "YES: proc body"
-						@procEnv(h.body)
-
-				when 'compare_ident'
-					{key, op, ident} = h.node
-					arg1 = @getVar(key)
-					arg2 = @getVar(ident)
-					if @doCompare(arg1, op, arg2)
-						@procEnv(h.body)
-
-				when 'compare_number'
-					{key, op, number} = h.node
-					arg1 = Number(@getVar(key))
-					if @doCompare(arg1, op, number)
-						@procEnv(h.body)
-
-				when 'compare_string'
-					{key, op, string} = h.node
-					arg1 = @getVar(key)
-					if @doCompare(arg1, op, string)
-						@procEnv(h.body)
-
-		debug "return from procEnv()"
-		return
-
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # Load environment from a string
 
 export loadEnvFile = (filepath, hOptions={}) ->
 
-	debug "enter loadEnvFile('#{filepath}')"
-	env = loadEnvString slurp(filepath), hOptions
-	debug "return from loadEnvFile()"
-	return env
+	debug "LOAD #{filepath}"
+	return loadEnvString slurp(filepath), hOptions
 
 # ---------------------------------------------------------------------------
 # Load environment from a string
@@ -288,26 +275,32 @@ export loadEnvString = (contents, hOptions={}) ->
 
 export loadEnvFrom = (searchDir, hOptions={}) ->
 	# --- Valid options:
+	#     hInitialVars - set these env vars first
 	#     recurse - load all .env files found by searching up
 	#     rootName - env var name of first .env file found
-	#     any option accepted by EndLoader
+	#     any option accepted by EnvLoader
+	#        hInitialVars - hash of initial env var values
+	#        prefix - load only vars with this prefix
+	#        stripPrefix - remove the prefix before setting vars
+	#        hCallbacks - callbacks to replace:
+	#                     getVar, setVar, clearVar, clearAll, names
 
-	debug "enter loadEnvFrom()"
-	filepath = pathTo('.env', searchDir, "up")
-	assert filepath?, "No .env file found"
-	dir = rtrunc(filepath, 5)
-	if hOptions.rootName
-		if not hOptions.hInitialVars
-			hOptions.hInitialVars = {}
-		hOptions.hInitialVars[hOptions.rootName] = dir
+	debug "enter loadEnvFrom('#{searchDir}')"
+	{rootName, hInitialVars, recurse} = hOptions
+	path = pathTo('.env', searchDir, "up")
+	assert path?, "No .env file found"
+	if rootName
+		if not hInitialVars
+			hInitialVars = hOptions.hInitialVars = {}
+		hInitialVars[rootName] = rtrunc(path, 5).replace(/\\/g, '/')
 
-	env = loadEnvFile filepath, hOptions
-	if not hOptions.recurse
-		debug "return from loadEnvFrom()"
-		return env
-	while filepath = pathTo('.env', resolve(dir, '..'), "up")
-		debug "Also load #{filepath}"
-		env = loadEnvFile filepath, hOptions
-		dir = rtrunc(filepath, 5)
+	if recurse
+		lPaths = [path]
+		while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
+			lPaths.unshift path
+		for path in lPaths
+			env = loadEnvFile path, hOptions
+	else
+		env = loadEnvFile path, hOptions
 	debug "return from loadEnvFrom()"
 	return env

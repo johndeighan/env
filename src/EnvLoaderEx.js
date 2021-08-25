@@ -56,11 +56,19 @@ export var EnvLoader = class EnvLoader extends PLLParser {
 
   // ..........................................................
   checkCallbacks() {
+    var i, lMissing, len, name, ref;
     if (this.hCallbacks != null) {
-      assert(isFunction(this.hCallbacks.getVar), "checkCallbacks: no getVar");
-      assert(isFunction(this.hCallbacks.setVar), "checkCallbacks: no setVar");
-      assert(isFunction(this.hCallbacks.clearVar), "checkCallbacks: no clearVar");
-      assert(isFunction(this.hCallbacks.names), "checkCallbacks: no names");
+      lMissing = [];
+      ref = ['getVar', 'setVar', 'clearVar', 'clearAll', 'names'];
+      for (i = 0, len = ref.length; i < len; i++) {
+        name = ref[i];
+        if (!isFunction(this.hCallbacks[name])) {
+          lMissing.push(name);
+        }
+      }
+      if (lMissing.length > 0) {
+        error(`Missing callbacks: ${lMissing.join(',')}`);
+      }
     }
   }
 
@@ -92,6 +100,15 @@ export var EnvLoader = class EnvLoader extends PLLParser {
   }
 
   // ..........................................................
+  clearAll() {
+    if (this.hCallbacks) {
+      this.hCallbacks.clearAll;
+    } else {
+      process.env = {};
+    }
+  }
+
+  // ..........................................................
   names() {
     if (this.hCallbacks) {
       return this.hCallbacks.names();
@@ -113,7 +130,7 @@ export var EnvLoader = class EnvLoader extends PLLParser {
 
   // ..........................................................
   mapString(str) {
-    var _, dqstr, ident, key, lMatches, neg, number, op, sqstr, value;
+    var _, key, lMatches, neg, op, value;
     if (lMatches = str.match(/^([A-Za-z_\.]+)\s*=\s*(.*)$/)) { // identifier
       [_, key, value] = lMatches;
       if (this.prefix && (key.indexOf(this.prefix) !== 0)) {
@@ -140,67 +157,98 @@ export var EnvLoader = class EnvLoader extends PLLParser {
           key
         };
       }
-    } else if (lMatches = str.match(/^if\s+([A-Za-z_]+)\s*(==|!=|>|>=|<|<=)\s*(?:([A-Za-z_]+)|([0-9]+)|'([^']*)'|"([^"]*)")$/)) { // identifier (key)
+    } else if (lMatches = str.match(/^if\s+([A-Za-z_][A-Za-z0-9_]*)\s*(is|isnt|>|>=|<|<=)\s*(.*)$/)) { // identifier (key)
       // comparison operator
-      // identifier
-      // number
-      // single quoted string
-      // double quoted string
-      [_, key, op, ident, number, sqstr, dqstr] = lMatches;
-      if (ident) {
-        return {
-          type: 'compare_ident',
-          key,
-          op,
-          ident
-        };
-      } else if (number) {
-        return {
-          type: 'compare_number',
-          key,
-          op,
-          number: Number(number)
-        };
-      } else if (sqstr) {
-        return {
-          type: 'compare_string',
-          key,
-          op,
-          string: sqstr
-        };
-      } else if (dqstr) {
-        return {
-          type: 'compare_string',
-          key,
-          op,
-          string: dqstr
-        };
-      } else {
-        return error(`Invalid line: '${str}'`);
-      }
+      [_, key, op, value] = lMatches;
+      return {
+        type: 'compare',
+        key,
+        op,
+        value: value.trim()
+      };
     } else {
       return error(`Invalid line: '${str}'`);
     }
   }
 
   // ..........................................................
+  expand(str) {
+    var replacer;
+    // --- NOTE: Must use => here, not -> so that "this" is set correctly
+    replacer = (str) => {
+      return this.getVar(str.substr(1));
+    };
+    return str.replace(/\$[A-Za-z_][A-Za-z0-9_]*/g, replacer);
+  }
+
+  // ..........................................................
   doCompare(arg1, op, arg2) {
+    arg1 = this.getVar(arg1);
+    arg2 = this.expand(arg2);
     switch (op) {
-      case '==':
+      case 'is':
         return arg1 === arg2;
-      case '!=':
+      case 'isnt':
         return arg1 !== arg2;
       case '<':
-        return arg1 < arg2;
+        return Number(arg1) < Number(arg2);
       case '<=':
-        return arg1 <= arg2;
+        return Number(arg1) <= Number(arg2);
       case '>':
-        return arg1 > arg2;
+        return Number(arg1) > Number(arg2);
       case '>=':
-        return arg1 >= arg2;
+        return Number(arg1) >= Number(arg2);
       default:
         return error(`doCompare(): Invalid operator '${op}'`);
     }
+  }
+
+  // ..........................................................
+  procEnv(tree) {
+    var h, i, key, len, op, value;
+    debug("enter procEnv()");
+    debug(tree, "TREE:");
+    for (i = 0, len = tree.length; i < len; i++) {
+      h = tree[i];
+      switch (h.node.type) {
+        case 'assign':
+          ({key, value} = h.node);
+          value = this.expand(value);
+          this.setVar(key, value);
+          debug(`procEnv(): assign ${key} = '${value}'`);
+          break;
+        case 'if_truthy':
+          ({key} = h.node);
+          debug(`if_truthy: '${key}'`);
+          if (this.getVar(key)) {
+            debug(`procEnv(): if_truthy('${key}') - proc body`);
+            this.procEnv(h.body);
+          } else {
+            debug(`procEnv(): if_truthy('${key}') - skip`);
+          }
+          break;
+        case 'if_falsy':
+          ({key} = h.node);
+          debug(`if_falsy: '${key}'`);
+          if (this.getVar(key)) {
+            debug(`procEnv(): if_falsy('${key}') - skip`);
+          } else {
+            debug(`procEnv(): if_falsy('${key}') - proc body`);
+            this.procEnv(h.body);
+          }
+          break;
+        case 'compare':
+          ({key, op, value} = h.node);
+          debug(`procEnv(key=${key}, value=${value})`);
+          if (this.doCompare(key, op, value)) {
+            debug(`procEnv(): compare('${key}','${value}') - proc body`);
+            this.procEnv(h.body);
+          } else {
+            debug(`procEnv(): compare('${key}','${value}') - skip`);
+          }
+      }
+    }
+    debug("return from procEnv()");
   }
 
   // ..........................................................
@@ -214,83 +262,14 @@ export var EnvLoader = class EnvLoader extends PLLParser {
     debug("return from load()");
   }
 
-  procEnv(tree) {
-    var arg1, arg2, h, i, ident, key, len, number, op, replacer, string, value;
-    debug("enter procEnv()");
-    debug(tree, "TREE:");
-    // --- NOTE: Must use => here, not ->
-    //           so that "this" is set correctly
-    replacer = (str) => {
-      var name, result;
-      debug(`enter replacer('${str}')`);
-      name = str.substr(1);
-      debug(`name = '${name}'`);
-      result = this.getVar(name);
-      debug(`return with '${result}'`);
-      return result;
-    };
-    for (i = 0, len = tree.length; i < len; i++) {
-      h = tree[i];
-      switch (h.node.type) {
-        case 'assign':
-          ({key, value} = h.node);
-          value = value.replace(/\$[A-Za-z_]+/g, replacer);
-          this.setVar(key, value);
-          debug(`procEnv(): assign ${key} = '${value}'`);
-          break;
-        case 'if_truthy':
-          ({key} = h.node);
-          debug(`if_truthy: '${key}'`);
-          if (this.getVar(key)) {
-            debug("YES: proc body");
-            this.procEnv(h.body);
-          }
-          break;
-        case 'if_falsy':
-          ({key} = h.node);
-          debug(`if_falsy: '${key}'`);
-          if (!this.getVar(key)) {
-            debug("YES: proc body");
-            this.procEnv(h.body);
-          }
-          break;
-        case 'compare_ident':
-          ({key, op, ident} = h.node);
-          arg1 = this.getVar(key);
-          arg2 = this.getVar(ident);
-          if (this.doCompare(arg1, op, arg2)) {
-            this.procEnv(h.body);
-          }
-          break;
-        case 'compare_number':
-          ({key, op, number} = h.node);
-          arg1 = Number(this.getVar(key));
-          if (this.doCompare(arg1, op, number)) {
-            this.procEnv(h.body);
-          }
-          break;
-        case 'compare_string':
-          ({key, op, string} = h.node);
-          arg1 = this.getVar(key);
-          if (this.doCompare(arg1, op, string)) {
-            this.procEnv(h.body);
-          }
-      }
-    }
-    debug("return from procEnv()");
-  }
-
 };
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Load environment from a string
 export var loadEnvFile = function(filepath, hOptions = {}) {
-  var env;
-  debug(`enter loadEnvFile('${filepath}')`);
-  env = loadEnvString(slurp(filepath), hOptions);
-  debug("return from loadEnvFile()");
-  return env;
+  debug(`LOAD ${filepath}`);
+  return loadEnvString(slurp(filepath), hOptions);
 };
 
 // ---------------------------------------------------------------------------
@@ -307,30 +286,38 @@ export var loadEnvString = function(contents, hOptions = {}) {
 // ---------------------------------------------------------------------------
 // Load environment from .env file
 export var loadEnvFrom = function(searchDir, hOptions = {}) {
-  var dir, env, filepath;
+  var env, hInitialVars, i, lPaths, len, path, recurse, rootName;
   // --- Valid options:
+  //     hInitialVars - set these env vars first
   //     recurse - load all .env files found by searching up
   //     rootName - env var name of first .env file found
-  //     any option accepted by EndLoader
-  debug("enter loadEnvFrom()");
-  filepath = pathTo('.env', searchDir, "up");
-  assert(filepath != null, "No .env file found");
-  dir = rtrunc(filepath, 5);
-  if (hOptions.rootName) {
-    if (!hOptions.hInitialVars) {
-      hOptions.hInitialVars = {};
+  //     any option accepted by EnvLoader
+  //        hInitialVars - hash of initial env var values
+  //        prefix - load only vars with this prefix
+  //        stripPrefix - remove the prefix before setting vars
+  //        hCallbacks - callbacks to replace:
+  //                     getVar, setVar, clearVar, clearAll, names
+  debug(`enter loadEnvFrom('${searchDir}')`);
+  ({rootName, hInitialVars, recurse} = hOptions);
+  path = pathTo('.env', searchDir, "up");
+  assert(path != null, "No .env file found");
+  if (rootName) {
+    if (!hInitialVars) {
+      hInitialVars = hOptions.hInitialVars = {};
     }
-    hOptions.hInitialVars[hOptions.rootName] = dir;
+    hInitialVars[rootName] = rtrunc(path, 5).replace(/\\/g, '/');
   }
-  env = loadEnvFile(filepath, hOptions);
-  if (!hOptions.recurse) {
-    debug("return from loadEnvFrom()");
-    return env;
-  }
-  while (filepath = pathTo('.env', resolve(dir, '..'), "up")) {
-    debug(`Also load ${filepath}`);
-    env = loadEnvFile(filepath, hOptions);
-    dir = rtrunc(filepath, 5);
+  if (recurse) {
+    lPaths = [path];
+    while (path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")) {
+      lPaths.unshift(path);
+    }
+    for (i = 0, len = lPaths.length; i < len; i++) {
+      path = lPaths[i];
+      env = loadEnvFile(path, hOptions);
+    }
+  } else {
+    env = loadEnvFile(path, hOptions);
   }
   debug("return from loadEnvFrom()");
   return env;
