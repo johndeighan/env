@@ -7,7 +7,7 @@ import {
 	say, undef, pass, error, rtrim, isArray, isFunction, rtrunc,
 	} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
-import {slurp, pathTo} from '@jdeighan/coffee-utils/fs'
+import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
 import {PLLParser} from '@jdeighan/string-input/pll'
 
 # ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 	if rootName
 		if not hInitialVars
 			hInitialVars = hOptions.hInitialVars = {}
-		hInitialVars[rootName] = rtrunc(path, 5).replace(/\\/g, '/')
+		hInitialVars[rootName] = mkpath(rtrunc(path, 5))
 
 	if recurse
 		lPaths = [path]

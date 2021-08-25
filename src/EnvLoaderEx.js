@@ -28,7 +28,8 @@ import {
 
 import {
   slurp,
-  pathTo
+  pathTo,
+  mkpath
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -305,7 +306,7 @@ export var loadEnvFrom = function(searchDir, hOptions = {}) {
     if (!hInitialVars) {
       hInitialVars = hOptions.hInitialVars = {};
     }
-    hInitialVars[rootName] = rtrunc(path, 5).replace(/\\/g, '/');
+    hInitialVars[rootName] = mkpath(rtrunc(path, 5));
   }
   if (recurse) {
     lPaths = [path];
