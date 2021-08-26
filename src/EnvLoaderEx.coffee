@@ -288,7 +288,8 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 	debug "enter loadEnvFrom('#{searchDir}')"
 	{rootName, hInitialVars, recurse} = hOptions
 	path = pathTo('.env', searchDir, "up")
-	assert path?, "No .env file found"
+	if not path?
+		return undef
 	if rootName
 		if not hInitialVars
 			hInitialVars = hOptions.hInitialVars = {}

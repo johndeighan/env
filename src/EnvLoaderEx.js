@@ -301,7 +301,9 @@ export var loadEnvFrom = function(searchDir, hOptions = {}) {
   debug(`enter loadEnvFrom('${searchDir}')`);
   ({rootName, hInitialVars, recurse} = hOptions);
   path = pathTo('.env', searchDir, "up");
-  assert(path != null, "No .env file found");
+  if (path == null) {
+    return undef;
+  }
   if (rootName) {
     if (!hInitialVars) {
       hInitialVars = hOptions.hInitialVars = {};
