@@ -11,14 +11,9 @@ import {
 } from 'path';
 
 import {
-  AvaTester
-} from '@jdeighan/ava-tester';
-
-import {
   say,
   undef,
-  pass,
-  taml
+  pass
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -33,6 +28,14 @@ import {
 } from '@jdeighan/coffee-utils/fs';
 
 import {
+  UnitTester
+} from '@jdeighan/coffee-utils/test';
+
+import {
+  taml
+} from '@jdeighan/string-input/convert';
+
+import {
   EnvLoader,
   loadEnvFrom,
   loadEnvFile,
@@ -43,7 +46,7 @@ dir = mydir(import.meta.url); // directory this file is in
 
 root_dir = resolve(dir, '..');
 
-simple = new AvaTester();
+simple = new UnitTester();
 
 /*   Contents of relevant .env files:
 

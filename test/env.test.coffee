@@ -3,10 +3,11 @@
 import {strict as assert} from 'assert'
 import {resolve} from 'path';
 
-import {AvaTester} from '@jdeighan/ava-tester'
-import {say, undef, pass, taml} from '@jdeighan/coffee-utils'
+import {say, undef, pass} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
+import {UnitTester} from '@jdeighan/coffee-utils/test'
+import {taml} from '@jdeighan/string-input/convert'
 import {
 	EnvLoader, loadEnvFrom, loadEnvFile, loadEnvString,
 	} from '@jdeighan/env'
@@ -14,7 +15,7 @@ import {
 dir = mydir(`import.meta.url`)  # directory this file is in
 root_dir = resolve(dir, '..')
 
-simple = new AvaTester()
+simple = new UnitTester()
 
 ###   Contents of relevant .env files:
 
