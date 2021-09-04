@@ -4,7 +4,7 @@ import {strict as assert} from 'assert'
 import {resolve} from 'path';
 
 import {say, undef, pass} from '@jdeighan/coffee-utils'
-import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
+import {debug} from '@jdeighan/coffee-utils/debug'
 import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {taml} from '@jdeighan/string-input/convert'

@@ -11,7 +11,8 @@ import {
 
 import {
   debug,
-  setDebugging
+  startDebugging,
+  endDebugging
 } from '@jdeighan/coffee-utils/debug';
 
 import {
@@ -38,11 +39,11 @@ filepath = pathTo('.env', dir, "up");
 
 say(`filepath = '${filepath}'`);
 
-setDebugging(true);
+startDebugging();
 
 contents = slurp(filepath);
 
-setDebugging(false);
+endDebugging();
 
 say("CONTENTS:");
 

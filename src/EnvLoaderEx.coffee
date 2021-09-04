@@ -6,7 +6,7 @@ import {dirname, resolve, parse as parse_fname} from 'path';
 import {
 	say, undef, pass, error, rtrim, isArray, isFunction, rtrunc,
 	} from '@jdeighan/coffee-utils'
-import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
+import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
 import {PLLParser} from '@jdeighan/string-input/pll'
 

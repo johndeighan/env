@@ -1,7 +1,9 @@
 # temp.coffee
 
 import {say, undef, pass, taml} from '@jdeighan/coffee-utils'
-import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
+import {
+	debug, startDebugging, endDebugging,
+	} from '@jdeighan/coffee-utils/debug'
 import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
 import {
 	setenv, getenv, clearenv,
@@ -14,9 +16,9 @@ dir = mydir(`import.meta.url`)
 filepath = pathTo('.env', dir, "up")
 say "filepath = '#{filepath}'"
 
-setDebugging true
+startDebugging()
 contents = slurp(filepath)
-setDebugging false
+endDebugging()
 
 say "CONTENTS:"
 say contents
