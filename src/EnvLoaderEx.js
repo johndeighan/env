@@ -33,7 +33,7 @@ import {
 
 import {
   PLLParser
-} from '@jdeighan/string-input/pll';
+} from '@jdeighan/string-input';
 
 // ---------------------------------------------------------------------------
 export var EnvLoader = class EnvLoader extends PLLParser {

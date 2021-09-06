@@ -8,7 +8,7 @@ import {
 	} from '@jdeighan/coffee-utils'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
-import {PLLParser} from '@jdeighan/string-input/pll'
+import {PLLParser} from '@jdeighan/string-input'
 
 # ---------------------------------------------------------------------------
 
