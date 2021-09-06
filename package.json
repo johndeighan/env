@@ -32,7 +32,7 @@
 	"homepage": "https://github.com/johndeighan/env#readme",
 	"dependencies": {
 		"@jdeighan/coffee-utils": "^1.2.18",
-		"@jdeighan/string-input": "^1.1.4",
+		"@jdeighan/string-input": "^1.1.5",
 		"coffeescript": "^2.5.1",
 		"cross-env": "^7.0.3"
 	}
