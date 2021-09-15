@@ -17,8 +17,13 @@ import {
 } from '@jdeighan/coffee-utils';
 
 import {
-  debug
+  debug,
+  setDebugging
 } from '@jdeighan/coffee-utils/debug';
+
+import {
+  log
+} from '@jdeighan/coffee-utils/log';
 
 import {
   mydir,
@@ -32,7 +37,7 @@ import {
 
 import {
   taml
-} from '@jdeighan/string-input/convert';
+} from '@jdeighan/string-input/taml';
 
 import {
   EnvLoader,

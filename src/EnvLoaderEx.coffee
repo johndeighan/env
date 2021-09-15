@@ -4,8 +4,9 @@ import {strict as assert} from 'assert'
 import {dirname, resolve, parse as parse_fname} from 'path';
 
 import {
-	say, undef, pass, error, rtrim, isArray, isFunction, rtrunc,
+	undef, pass, error, rtrim, isArray, isFunction, rtrunc, escapeStr,
 	} from '@jdeighan/coffee-utils'
+import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
 import {PLLParser} from '@jdeighan/string-input'
@@ -101,15 +102,16 @@ export class EnvLoader extends PLLParser
 
 	dump: () ->
 
-		say "=== Environment Variables: ==="
+		log "=== Environment Variables: ==="
 		for name in @names()
-			say "   #{name} = '#{@getVar(name)}'"
+			log "   #{name} = '#{@getVar(name)}'"
 		return
 
 	# ..........................................................
 
-	mapString: (str) ->
+	mapNode: (str) ->
 
+		debug "enter mapNode('#{escapeStr(str)}')"
 		if lMatches = str.match(///^
 				([A-Za-z_\.]+)      # identifier
 				\s*
@@ -122,7 +124,7 @@ export class EnvLoader extends PLLParser
 				return undef
 			if @stripPrefix
 				key = key.substring(@prefix.length)
-			return {
+			result = {
 				type: 'assign',
 				key,
 				value: rtrim(value),
@@ -138,9 +140,9 @@ export class EnvLoader extends PLLParser
 				$///)
 			[_, neg, key] = lMatches
 			if neg
-				return {type: 'if_falsy', key}
+				result = {type: 'if_falsy', key}
 			else
-				return {type: 'if_truthy', key}
+				result = {type: 'if_truthy', key}
 		else if lMatches = str.match(///^
 				if
 				\s+
@@ -158,9 +160,16 @@ export class EnvLoader extends PLLParser
 				(.*)
 				$///)
 			[_, key, op, value] = lMatches
-			return {type: 'compare', key, op, value: value.trim()}
+			result = {
+				type: 'compare',
+				key,
+				op,
+				value: value.trim(),
+				}
 		else
 			error "Invalid line: '#{str}'"
+		debug "return from mapNode():", result
+		return result
 
 	# ..........................................................
 
@@ -197,7 +206,6 @@ export class EnvLoader extends PLLParser
 	procEnv: (tree) ->
 
 		debug "enter procEnv()"
-		debug tree, "TREE:"
 
 		for h in tree
 			switch h.node.type
@@ -244,6 +252,7 @@ export class EnvLoader extends PLLParser
 
 		debug "enter load()"
 		tree = @getTree()
+		debug "TREE", tree
 		assert tree?, "load(): tree is undef"
 		assert isArray(tree), "load(): tree is not an array"
 		@procEnv tree

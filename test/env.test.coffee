@@ -4,10 +4,11 @@ import {strict as assert} from 'assert'
 import {resolve} from 'path';
 
 import {say, undef, pass} from '@jdeighan/coffee-utils'
-import {debug} from '@jdeighan/coffee-utils/debug'
+import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
+import {log} from '@jdeighan/coffee-utils/log'
 import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
-import {taml} from '@jdeighan/string-input/convert'
+import {taml} from '@jdeighan/string-input/taml'
 import {
 	EnvLoader, loadEnvFrom, loadEnvFile, loadEnvString,
 	} from '@jdeighan/env'
@@ -266,6 +267,7 @@ test/test .env
 	simple.equal 259, env.getVar('dev'),       'yes'
 
 	)()
+
 # ---------------------------------------------------------------------------
 # --- test hCallbacks
 

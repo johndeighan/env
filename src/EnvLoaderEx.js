@@ -11,15 +11,19 @@ import {
 } from 'path';
 
 import {
-  say,
   undef,
   pass,
   error,
   rtrim,
   isArray,
   isFunction,
-  rtrunc
+  rtrunc,
+  escapeStr
 } from '@jdeighan/coffee-utils';
+
+import {
+  log
+} from '@jdeighan/coffee-utils/log';
 
 import {
   debug
@@ -120,17 +124,18 @@ export var EnvLoader = class EnvLoader extends PLLParser {
   // ..........................................................
   dump() {
     var i, len, name, ref;
-    say("=== Environment Variables: ===");
+    log("=== Environment Variables: ===");
     ref = this.names();
     for (i = 0, len = ref.length; i < len; i++) {
       name = ref[i];
-      say(`   ${name} = '${this.getVar(name)}'`);
+      log(`   ${name} = '${this.getVar(name)}'`);
     }
   }
 
   // ..........................................................
-  mapString(str) {
-    var _, key, lMatches, neg, op, value;
+  mapNode(str) {
+    var _, key, lMatches, neg, op, result, value;
+    debug(`enter mapNode('${escapeStr(str)}')`);
     if (lMatches = str.match(/^([A-Za-z_\.]+)\s*=\s*(.*)$/)) { // identifier
       [_, key, value] = lMatches;
       if (this.prefix && (key.indexOf(this.prefix) !== 0)) {
@@ -139,7 +144,7 @@ export var EnvLoader = class EnvLoader extends PLLParser {
       if (this.stripPrefix) {
         key = key.substring(this.prefix.length);
       }
-      return {
+      result = {
         type: 'assign',
         key,
         value: rtrim(value)
@@ -147,12 +152,12 @@ export var EnvLoader = class EnvLoader extends PLLParser {
     } else if (lMatches = str.match(/^if\s+(?:(not)\s+)?([A-Za-z_]+)$/)) { // identifier
       [_, neg, key] = lMatches;
       if (neg) {
-        return {
+        result = {
           type: 'if_falsy',
           key
         };
       } else {
-        return {
+        result = {
           type: 'if_truthy',
           key
         };
@@ -160,15 +165,17 @@ export var EnvLoader = class EnvLoader extends PLLParser {
     } else if (lMatches = str.match(/^if\s+([A-Za-z_][A-Za-z0-9_]*)\s*(is|isnt|>|>=|<|<=)\s*(.*)$/)) { // identifier (key)
       // comparison operator
       [_, key, op, value] = lMatches;
-      return {
+      result = {
         type: 'compare',
         key,
         op,
         value: value.trim()
       };
     } else {
-      return error(`Invalid line: '${str}'`);
+      error(`Invalid line: '${str}'`);
     }
+    debug("return from mapNode():", result);
+    return result;
   }
 
   // ..........................................................
@@ -207,7 +214,6 @@ export var EnvLoader = class EnvLoader extends PLLParser {
   procEnv(tree) {
     var h, i, key, len, op, value;
     debug("enter procEnv()");
-    debug(tree, "TREE:");
     for (i = 0, len = tree.length; i < len; i++) {
       h = tree[i];
       switch (h.node.type) {
@@ -256,6 +262,7 @@ export var EnvLoader = class EnvLoader extends PLLParser {
     var tree;
     debug("enter load()");
     tree = this.getTree();
+    debug("TREE", tree);
     assert(tree != null, "load(): tree is undef");
     assert(isArray(tree), "load(): tree is not an array");
     this.procEnv(tree);
