@@ -41,21 +41,15 @@ import {
 
 // ---------------------------------------------------------------------------
 export var EnvLoader = class EnvLoader extends PLLParser {
-  constructor(contents, hOptions1 = {}) {
-    var key, ref, value;
+  constructor(contents, hOptions = {}) {
+    // --- Valid options:
+    //        prefix - load only vars with this prefix
+    //        stripPrefix - remove the prefix before setting vars
+    //        hCallbacks - callbacks to replace:
+    //                     getVar, setVar, clearVar, clearAll, names
     super(contents);
-    this.hOptions = hOptions1;
-    this.prefix = this.hOptions.prefix;
-    this.stripPrefix = this.hOptions.stripPrefix;
-    this.hCallbacks = this.hOptions.hCallbacks;
+    ({prefix: this.prefix, stripPrefix: this.stripPrefix, hCallbacks: this.hCallbacks} = hOptions);
     this.checkCallbacks();
-    if (this.hOptions.hInitialVars) {
-      ref = this.hOptions.hInitialVars;
-      for (key in ref) {
-        value = ref[key];
-        this.setVar(key, value);
-      }
-    }
   }
 
   // ..........................................................
@@ -273,9 +267,9 @@ export var EnvLoader = class EnvLoader extends PLLParser {
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-// Load environment from a string
+// Load environment from a file
 export var loadEnvFile = function(filepath, hOptions = {}) {
-  debug(`LOAD ${filepath}`);
+  debug(`LOADENV ${filepath}`);
   return loadEnvString(slurp(filepath), hOptions);
 };
 
@@ -292,40 +286,22 @@ export var loadEnvString = function(contents, hOptions = {}) {
 
 // ---------------------------------------------------------------------------
 // Load environment from .env file
-export var loadEnvFrom = function(searchDir, hOptions = {}) {
-  var env, hInitialVars, i, lPaths, len, path, recurse, rootName;
-  // --- Valid options:
-  //     hInitialVars - set these env vars first
-  //     recurse - load all .env files found by searching up
-  //     rootName - env var name of first .env file found
-  //     any option accepted by EnvLoader
-  //        hInitialVars - hash of initial env var values
-  //        prefix - load only vars with this prefix
-  //        stripPrefix - remove the prefix before setting vars
-  //        hCallbacks - callbacks to replace:
-  //                     getVar, setVar, clearVar, clearAll, names
-  debug(`enter loadEnvFrom('${searchDir}')`);
-  ({rootName, hInitialVars, recurse} = hOptions);
+export var loadEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hOptions = {}) {
+  var env, i, lPaths, len, path;
+  debug(`enter loadEnvFrom('${searchDir}', rootName=${rootName})`);
   path = pathTo('.env', searchDir, "up");
   if (path == null) {
-    return undef;
+    return;
   }
   if (rootName) {
-    if (!hInitialVars) {
-      hInitialVars = hOptions.hInitialVars = {};
-    }
-    hInitialVars[rootName] = mkpath(rtrunc(path, 5));
+    process.env[rootName] = mkpath(rtrunc(path, 5));
   }
-  if (recurse) {
-    lPaths = [path];
-    while (path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")) {
-      lPaths.unshift(path);
-    }
-    for (i = 0, len = lPaths.length; i < len; i++) {
-      path = lPaths[i];
-      env = loadEnvFile(path, hOptions);
-    }
-  } else {
+  lPaths = [path];
+  while (path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")) {
+    lPaths.unshift(path);
+  }
+  for (i = 0, len = lPaths.length; i < len; i++) {
+    path = lPaths[i];
     env = loadEnvFile(path, hOptions);
   }
   debug("return from loadEnvFrom()");

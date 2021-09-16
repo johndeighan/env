@@ -6,7 +6,7 @@ import {resolve} from 'path';
 import {say, undef, pass} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {log} from '@jdeighan/coffee-utils/log'
-import {mydir, pathTo, slurp} from '@jdeighan/coffee-utils/fs'
+import {mydir, pathTo, slurp, mkpath} from '@jdeighan/coffee-utils/fs'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {taml} from '@jdeighan/string-input/taml'
 import {
@@ -15,12 +15,13 @@ import {
 
 dir = mydir(`import.meta.url`)  # directory this file is in
 root_dir = resolve(dir, '..')
+test_dir = mkpath(dir, 'test')
 
 simple = new UnitTester()
 
 ###   Contents of relevant .env files:
 
-Root .env
+Root .env   (in root_dir)
 
 	if development
 		color = magenta
@@ -29,7 +30,7 @@ Root .env
 		color = azure
 		mood = happy
 
-test .env
+test .env    (in dir)
 
 	if mood == 'somber'
 		bgColor = sadness
@@ -38,178 +39,72 @@ test .env
 		bgColor = purple
 		show = no
 
-test/test .env
+test/test .env    (in test_dir)
 
 	show = maybe
 
 ###
 # ---------------------------------------------------------------------------
-# --- test using EnvLoader
-
-(() ->
-	env = new EnvLoader("""
-		development = yes
-		if development
-			color = red
-			if usemoods
-				mood = somber
-		if not development
-			color = blue
-			if usemoods
-				mood = happy
-			""")
-
-	tree = env.getTree()
-
-	simple.equal 60, tree, taml("""
-			---
-			-
-				lineNum: 1
-				node:
-					type: assign
-					key: development
-					value: 'yes'
-			-
-				lineNum: 2
-				node:
-					type: if_truthy
-					key: development
-				body:
-					-
-						lineNum: 3
-						node:
-							type: assign
-							key: color
-							value: red
-					-
-						lineNum: 4
-						node:
-							type: if_truthy
-							key: usemoods
-						body:
-							-
-								lineNum: 5
-								node:
-									type: assign
-									key: mood
-									value: somber
-			-
-				lineNum: 6
-				node:
-					type: if_falsy
-					key: development
-				body:
-					-
-						lineNum: 7
-						node:
-							type: assign
-							key: color
-							value: blue
-					-
-						lineNum: 8
-						node:
-							type: if_truthy
-							key: usemoods
-						body:
-							-
-								lineNum: 9
-								node:
-									type: assign
-									key: mood
-									value: happy
-			""")
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test using .env file
-
-(() ->
-	filepath = pathTo('.env', dir, "up")
-	contents = slurp(filepath)
-	env = new EnvLoader(contents)
-	tree = env.getTree()
-
-	simple.equal 128, tree, taml("""
-			---
-			-
-				node:
-					op:    is
-					value: somber
-					type:  compare
-					key:   mood
-				lineNum: 1
-				body:
-					-
-						node:
-							type:  assign
-							key:   bgColor
-							value: sadness
-						lineNum: 2
-					-
-						node:
-							type:  assign
-							key:   show
-							value: yes
-						lineNum: 3
-			-
-				node:
-					op:    is
-					value: happy
-					type:  compare
-					key:   mood
-				lineNum: 4
-				body:
-					-
-						node:
-							type:  assign
-							key:   bgColor
-							value: purple
-						lineNum: 5
-					-
-						node:
-							type:  assign
-							key:   show
-							value: no
-						lineNum: 6
-			""")
-
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test env var replacement
-
-(() ->
-	env = new EnvLoader("""
-			dir_root = /usr/project
-			dir_data = $dir_root/data
-			""")
-	env.load()
-
-	simple.equal 180, env.getVar('dir_data'), "/usr/project/data"
-
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test if environment is really loaded using .env file
-#
-# Contents of .env file:
-#   if development
-#      color = magenta
-#      mood = somber
-#   if not development
-#      color = azure
-#      mood = happy
+# --- test loading from root_dir
 
 (() ->
 	process.env.development = 'yes'
+	loadEnvFrom(root_dir)
 
-	env = loadEnvFrom(root_dir)
-	assert env?, "env is undefined on line 174"
+	simple.equal 54, process.env.development, 'yes'
+	simple.equal 55, process.env.color, 'magenta'
+	simple.equal 56, process.env.mood, 'somber'
+	simple.equal 57, process.env.bgColor, undef
+	)()
 
-	simple.equal 201, env.getVar('development'), 'yes'
-	simple.equal 202, env.getVar('color'), 'magenta'
-	simple.equal 203, env.getVar('mood'), 'somber'
+(() ->
+	delete process.env.development
+	loadEnvFrom(root_dir)
 
+	simple.equal 64, process.env.development, undef
+	simple.equal 65, process.env.color, 'azure'
+	simple.equal 66, process.env.mood, 'happy'
+	simple.equal 67, process.env.bgColor, undef
+	)()
+
+# ---------------------------------------------------------------------------
+# --- test loading from dir
+
+(() ->
+	process.env.development = 'yes'
+	loadEnvFrom(dir)
+
+	simple.equal 77, process.env.development, 'yes'
+	simple.equal 78, process.env.color, 'magenta'
+	simple.equal 79, process.env.mood, 'somber'
+	simple.equal 80, process.env.bgColor, 'sadness'
+	)()
+
+(() ->
+	delete process.env.development
+	loadEnvFrom(dir)
+
+	simple.equal 87, process.env.development, undef
+	simple.equal 88, process.env.color, 'azure'
+	simple.equal 89, process.env.mood, 'happy'
+	simple.equal 90, process.env.bgColor, 'purple'
+	)()
+
+# ---------------------------------------------------------------------------
+# --- test loading from test_dir
+
+(() ->
+	process.env.development = 'yes'
+	loadEnvFrom(test_dir)
+
+	simple.equal 100, process.env.show, 'maybe'
+	)()
+
+(() ->
+	delete process.env.development
+	loadEnvFrom(test_dir)
+
+	simple.equal 107, process.env.show, 'maybe'
 	)()
 
 # ---------------------------------------------------------------------------
@@ -221,19 +116,19 @@ test/test .env
 	delete process.env['dir_data']
 	delete process.env['sb.dev']
 
-	env = loadEnvString("""
+	loadEnvString("""
 			dir_root = /usr/project
 			sb.indent = 3
 			dir_data = /usr/project/data
 			sb.dev = yes
 			""", {
-			prefix: 'sb.',
+			prefix: 'sb.',     # load only keys with prefix 'sb.'
 			})
 
-	simple.equal 225, env.getVar('dir_root'),  undef
-	simple.equal 226, env.getVar('sb.indent'), '3'
-	simple.equal 227, env.getVar('dir_data'),  undef
-	simple.equal 228, env.getVar('sb.dev'),   'yes'
+	simple.equal 128, process.env['dir_root'],  undef
+	simple.equal 129, process.env['sb.indent'], '3'
+	simple.equal 130, process.env['dir_data'],  undef
+	simple.equal 131, process.env['sb.dev'],   'yes'
 
 	)()
 
@@ -258,13 +153,13 @@ test/test .env
 			stripPrefix: true,
 			})
 
-	simple.equal 253, env.getVar('dir_root'),  undef
-	simple.equal 254, env.getVar('sb.indent'), undef
-	simple.equal 255, env.getVar('indent'),    '3'
+	simple.equal 156, env.getVar('dir_root'),  undef
+	simple.equal 157, env.getVar('sb.indent'), undef
+	simple.equal 158, env.getVar('indent'),    '3'
 
-	simple.equal 257, env.getVar('dir_data'),  undef
-	simple.equal 258, env.getVar('sb.dev'),    undef
-	simple.equal 259, env.getVar('dev'),       'yes'
+	simple.equal 160, env.getVar('dir_data'),  undef
+	simple.equal 161, env.getVar('sb.dev'),    undef
+	simple.equal 162, env.getVar('dev'),       'yes'
 
 	)()
 
@@ -274,6 +169,7 @@ test/test .env
 (() ->
 
 	hVariables = {}
+
 	hCallbacks = {
 		getVar: (name) ->
 			return hVariables[name]
@@ -287,7 +183,7 @@ test/test .env
 			return Object.keys(hVariables)
 		}
 
-	env = loadEnvString("""
+	loadEnvString("""
 			dev = yes
 			dir_root = /usr/project
 			dir_data = $dir_root/data
@@ -295,120 +191,9 @@ test/test .env
 				hCallbacks
 				})
 
-	simple.equal     289, env.getVar('dir_root'),  '/usr/project'
-	simple.equal     290, env.getVar('dir_data'), '/usr/project/data'
-	simple.same_list 291, env.names(),  ['dev','dir_root','dir_data']
-
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test hInitialVars
-
-(() ->
-	delete process.env['dir_root']
-	delete process.env['dir_data']
-
-	env = loadEnvString("""
-			dir_data = $dir_root/data
-			""", {
-			hInitialVars: {
-				"dir_root": "/usr/project",
-				}
-			})
-
-	simple.equal 310, env.getVar('dir_data'),  '/usr/project/data'
-
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test hInitialVars with custom callbacks
-
-(() ->
-	hVars = {}
-
-	hCallbacks = {
-
-		getVar: (name) ->
-			return hVars[name]
-
-		setVar: (name, value) ->
-			hVars[name] = value
-			return
-
-		clearVar: (name) ->
-			delete hVars[name]
-			return
-
-		clearAll: () ->
-			hVars = {}
-			return
-
-		names: () ->
-			return Object.keys(hVars)
-
+	simple.equal 194, hVariables, {
+		dev: 'yes',
+		dir_root: '/usr/project',
+		dir_data: '/usr/project/data',
 		}
-
-	env = loadEnvString("""
-			dir_data = $dir_root/data
-			""", {
-			hInitialVars: {
-				"dir_root": "/usr/project",
-				},
-			hCallbacks
-			})
-
-	simple.equal 351, hVars, {
-		dir_root: '/usr/project'
-		dir_data: '/usr/project/data'
-		}
-
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test recurse
-#
-
-(() ->
-	hVars = {}
-
-	hCallbacks = {
-
-		getVar: (name) ->
-			return hVars[name]
-
-		setVar: (name, value) ->
-			hVars[name] = value
-			return
-
-		clearVar: (name) ->
-			delete hVars[name]
-			return
-
-		clearAll: () ->
-			hVars = {}
-			return
-
-		names: () ->
-			return Object.keys(hVars)
-
-		}
-
-	env = loadEnvFrom("#{dir}/test", {
-			hInitialVars: {
-				"development": "yes",
-				},
-			hCallbacks,
-			rootName: 'dir_root',
-			recurse: true
-			})
-
-	simple.equal 396, hVars, {
-		dir_root: 'C:/Users/johnd/env/test/test'
-		development: 'yes'
-		color: 'magenta'
-		mood: 'somber'
-		bgColor: 'sadness'
-		show: 'maybe'
-		}
-
 	)()

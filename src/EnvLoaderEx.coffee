@@ -15,9 +15,8 @@ import {PLLParser} from '@jdeighan/string-input'
 
 export class EnvLoader extends PLLParser
 
-	constructor: (contents, @hOptions={}) ->
+	constructor: (contents, hOptions={}) ->
 		# --- Valid options:
-		#        hInitialVars - hash of initial env var values
 		#        prefix - load only vars with this prefix
 		#        stripPrefix - remove the prefix before setting vars
 		#        hCallbacks - callbacks to replace:
@@ -25,15 +24,8 @@ export class EnvLoader extends PLLParser
 
 
 		super contents
-
-		@prefix = @hOptions.prefix
-		@stripPrefix = @hOptions.stripPrefix
-
-		@hCallbacks = @hOptions.hCallbacks
+		{@prefix, @stripPrefix, @hCallbacks} = hOptions
 		@checkCallbacks()
-		if @hOptions.hInitialVars
-			for key,value of @hOptions.hInitialVars
-				@setVar key, value
 
 	# ..........................................................
 
@@ -261,11 +253,11 @@ export class EnvLoader extends PLLParser
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
-# Load environment from a string
+# Load environment from a file
 
 export loadEnvFile = (filepath, hOptions={}) ->
 
-	debug "LOAD #{filepath}"
+	debug "LOADENV #{filepath}"
 	return loadEnvString slurp(filepath), hOptions
 
 # ---------------------------------------------------------------------------
@@ -282,35 +274,19 @@ export loadEnvString = (contents, hOptions={}) ->
 # ---------------------------------------------------------------------------
 # Load environment from .env file
 
-export loadEnvFrom = (searchDir, hOptions={}) ->
-	# --- Valid options:
-	#     hInitialVars - set these env vars first
-	#     recurse - load all .env files found by searching up
-	#     rootName - env var name of first .env file found
-	#     any option accepted by EnvLoader
-	#        hInitialVars - hash of initial env var values
-	#        prefix - load only vars with this prefix
-	#        stripPrefix - remove the prefix before setting vars
-	#        hCallbacks - callbacks to replace:
-	#                     getVar, setVar, clearVar, clearAll, names
+export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 
-	debug "enter loadEnvFrom('#{searchDir}')"
-	{rootName, hInitialVars, recurse} = hOptions
+	debug "enter loadEnvFrom('#{searchDir}', rootName=#{rootName})"
 	path = pathTo('.env', searchDir, "up")
 	if not path?
-		return undef
+		return
 	if rootName
-		if not hInitialVars
-			hInitialVars = hOptions.hInitialVars = {}
-		hInitialVars[rootName] = mkpath(rtrunc(path, 5))
+		process.env[rootName] = mkpath(rtrunc(path, 5))
 
-	if recurse
-		lPaths = [path]
-		while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
-			lPaths.unshift path
-		for path in lPaths
-			env = loadEnvFile path, hOptions
-	else
+	lPaths = [path]
+	while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
+		lPaths.unshift path
+	for path in lPaths
 		env = loadEnvFile path, hOptions
 	debug "return from loadEnvFrom()"
 	return env
