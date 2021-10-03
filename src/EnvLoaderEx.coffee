@@ -275,18 +275,31 @@ export loadEnvString = (contents, hOptions={}) ->
 # Load environment from .env file
 
 export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
+	# --- valid options:
+	#        onefile - load only the first file found
 
 	debug "enter loadEnvFrom('#{searchDir}', rootName=#{rootName})"
 	path = pathTo('.env', searchDir, "up")
 	if not path?
+		debug "return from loadEnvFrom() - no .env file found"
 		return
-	if rootName
-		process.env[rootName] = mkpath(rtrunc(path, 5))
-
+	debug "found .env file: #{path}"
 	lPaths = [path]
-	while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
-		lPaths.unshift path
+
+	# --- Don't set root directory if it's already defined
+	if rootName && not process.env[rootName]
+		root = mkpath(rtrunc(path, 5))
+		debug "set env var #{rootName} to #{root}"
+		process.env[rootName] = root
+
+	if not hOptions.onefile
+		# --- search upward for .env files, but process top down
+		while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
+			debug "found .env file: #{path}"
+			lPaths.unshift path
+
+	hEnv = {}
 	for path in lPaths
-		env = loadEnvFile path, hOptions
+		hEnv = Object.assign(hEnv, loadEnvFile(path, hOptions))
 	debug "return from loadEnvFrom()"
-	return env
+	return hEnv

@@ -13,9 +13,9 @@ import {
 	EnvLoader, loadEnvFrom, loadEnvFile, loadEnvString,
 	} from '@jdeighan/env'
 
-dir = mydir(`import.meta.url`)  # directory this file is in
-root_dir = resolve(dir, '..')
-test_dir = mkpath(dir, 'test')
+test_dir = mydir(`import.meta.url`)  # directory this file is in
+root_dir = resolve(test_dir, '..')
+sub_dir = mkpath(test_dir, 'subdir')
 
 simple = new UnitTester()
 
@@ -29,8 +29,9 @@ Root .env   (in root_dir)
 	if not development
 		color = azure
 		mood = happy
+	value = 1
 
-test .env    (in dir)
+test .env    (in test_dir)
 
 	if mood == 'somber'
 		bgColor = sadness
@@ -38,10 +39,12 @@ test .env    (in dir)
 	if mood == 'happy'
 		bgColor = purple
 		show = no
+	value = 2
 
-test/test .env    (in test_dir)
+test/subdir .env    (in sub_dir)
 
 	show = maybe
+	value = 3
 
 ###
 # ---------------------------------------------------------------------------
@@ -55,6 +58,7 @@ test/test .env    (in test_dir)
 	simple.equal 55, process.env.color, 'magenta'
 	simple.equal 56, process.env.mood, 'somber'
 	simple.equal 57, process.env.bgColor, undef
+	simple.equal 61, process.env.value, '1'
 	)()
 
 (() ->
@@ -65,29 +69,7 @@ test/test .env    (in test_dir)
 	simple.equal 65, process.env.color, 'azure'
 	simple.equal 66, process.env.mood, 'happy'
 	simple.equal 67, process.env.bgColor, undef
-	)()
-
-# ---------------------------------------------------------------------------
-# --- test loading from dir
-
-(() ->
-	process.env.development = 'yes'
-	loadEnvFrom(dir)
-
-	simple.equal 77, process.env.development, 'yes'
-	simple.equal 78, process.env.color, 'magenta'
-	simple.equal 79, process.env.mood, 'somber'
-	simple.equal 80, process.env.bgColor, 'sadness'
-	)()
-
-(() ->
-	delete process.env.development
-	loadEnvFrom(dir)
-
-	simple.equal 87, process.env.development, undef
-	simple.equal 88, process.env.color, 'azure'
-	simple.equal 89, process.env.mood, 'happy'
-	simple.equal 90, process.env.bgColor, 'purple'
+	simple.equal 61, process.env.value, '1'
 	)()
 
 # ---------------------------------------------------------------------------
@@ -97,14 +79,41 @@ test/test .env    (in test_dir)
 	process.env.development = 'yes'
 	loadEnvFrom(test_dir)
 
-	simple.equal 100, process.env.show, 'maybe'
+	simple.equal 77, process.env.development, 'yes'
+	simple.equal 78, process.env.color, 'magenta'
+	simple.equal 79, process.env.mood, 'somber'
+	simple.equal 80, process.env.bgColor, 'sadness'
+	simple.equal 61, process.env.value, '2'
 	)()
 
 (() ->
 	delete process.env.development
 	loadEnvFrom(test_dir)
 
+	simple.equal 87, process.env.development, undef
+	simple.equal 88, process.env.color, 'azure'
+	simple.equal 89, process.env.mood, 'happy'
+	simple.equal 90, process.env.bgColor, 'purple'
+	simple.equal 61, process.env.value, '2'
+	)()
+
+# ---------------------------------------------------------------------------
+# --- test loading from sub_dir
+
+(() ->
+	process.env.development = 'yes'
+	loadEnvFrom(sub_dir)
+
+	simple.equal 100, process.env.show, 'maybe'
+	simple.equal 61, process.env.value, '3'
+	)()
+
+(() ->
+	delete process.env.development
+	loadEnvFrom(sub_dir)
+
 	simple.equal 107, process.env.show, 'maybe'
+	simple.equal 61, process.env.value, '3'
 	)()
 
 # ---------------------------------------------------------------------------

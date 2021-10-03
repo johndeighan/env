@@ -287,23 +287,35 @@ export var loadEnvString = function(contents, hOptions = {}) {
 // ---------------------------------------------------------------------------
 // Load environment from .env file
 export var loadEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hOptions = {}) {
-  var env, i, lPaths, len, path;
+  var hEnv, i, lPaths, len, path, root;
+  // --- valid options:
+  //        onefile - load only the first file found
   debug(`enter loadEnvFrom('${searchDir}', rootName=${rootName})`);
   path = pathTo('.env', searchDir, "up");
   if (path == null) {
+    debug("return from loadEnvFrom() - no .env file found");
     return;
   }
-  if (rootName) {
-    process.env[rootName] = mkpath(rtrunc(path, 5));
-  }
+  debug(`found .env file: ${path}`);
   lPaths = [path];
-  while (path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")) {
-    lPaths.unshift(path);
+  // --- Don't set root directory if it's already defined
+  if (rootName && !process.env[rootName]) {
+    root = mkpath(rtrunc(path, 5));
+    debug(`set env var ${rootName} to ${root}`);
+    process.env[rootName] = root;
   }
+  if (!hOptions.onefile) {
+    // --- search upward for .env files, but process top down
+    while (path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")) {
+      debug(`found .env file: ${path}`);
+      lPaths.unshift(path);
+    }
+  }
+  hEnv = {};
   for (i = 0, len = lPaths.length; i < len; i++) {
     path = lPaths[i];
-    env = loadEnvFile(path, hOptions);
+    hEnv = Object.assign(hEnv, loadEnvFile(path, hOptions));
   }
   debug("return from loadEnvFrom()");
-  return env;
+  return hEnv;
 };
