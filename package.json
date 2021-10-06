@@ -5,7 +5,8 @@
 	"description": "enhanced syntax for .env files",
 	"main": "./src/EnvLoaderEx.js",
 	"exports": {
-		".": "./src/EnvLoaderEx.js"
+		".":     "./src/EnvLoaderEx.js",
+		"./lib": "./src/EnvLib.js"
 	},
 	"engines": {
 		"node": ">=12.0.0"

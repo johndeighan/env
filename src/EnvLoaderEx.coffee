@@ -42,22 +42,22 @@ export class EnvLoader extends PLLParser
 
 	# ..........................................................
 
-	setVar: (name, value) ->
-
-		if @hCallbacks
-			@hCallbacks.setVar name, value
-		else
-			process.env[name] = value
-		return
-
-	# ..........................................................
-
 	getVar: (name) ->
 
 		if @hCallbacks
 			return @hCallbacks.getVar(name)
 		else
 			return process.env[name]
+		return
+
+	# ..........................................................
+
+	setVar: (name, value) ->
+
+		if @hCallbacks
+			@hCallbacks.setVar name, value
+		else
+			process.env[name] = value
 		return
 
 	# ..........................................................

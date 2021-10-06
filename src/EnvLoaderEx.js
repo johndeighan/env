@@ -71,20 +71,20 @@ export var EnvLoader = class EnvLoader extends PLLParser {
   }
 
   // ..........................................................
-  setVar(name, value) {
-    if (this.hCallbacks) {
-      this.hCallbacks.setVar(name, value);
-    } else {
-      process.env[name] = value;
-    }
-  }
-
-  // ..........................................................
   getVar(name) {
     if (this.hCallbacks) {
       return this.hCallbacks.getVar(name);
     } else {
       return process.env[name];
+    }
+  }
+
+  // ..........................................................
+  setVar(name, value) {
+    if (this.hCallbacks) {
+      this.hCallbacks.setVar(name, value);
+    } else {
+      process.env[name] = value;
     }
   }
 

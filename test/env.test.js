@@ -11,9 +11,7 @@ import {
 } from 'path';
 
 import {
-  say,
-  undef,
-  pass
+  undef
 } from '@jdeighan/coffee-utils';
 
 import {
@@ -27,8 +25,6 @@ import {
 
 import {
   mydir,
-  pathTo,
-  slurp,
   mkpath
 } from '@jdeighan/coffee-utils/fs';
 
@@ -37,13 +33,7 @@ import {
 } from '@jdeighan/coffee-utils/test';
 
 import {
-  taml
-} from '@jdeighan/string-input/taml';
-
-import {
-  EnvLoader,
   loadEnvFrom,
-  loadEnvFile,
   loadEnvString
 } from '@jdeighan/env';
 
