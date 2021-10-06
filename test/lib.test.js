@@ -79,21 +79,21 @@ test/subdir .env    (in sub_dir)
   hEnv = loadEnvLibFrom(root_dir, undef, {
     development: 'yes'
   });
-  simple.equal(54, hEnv.development, 'yes');
-  simple.equal(55, hEnv.color, 'magenta');
-  simple.equal(56, hEnv.mood, 'somber');
-  simple.equal(57, hEnv.bgColor, undef);
-  return simple.equal(61, hEnv.value, '1');
+  simple.equal(53, hEnv.development, 'yes');
+  simple.equal(54, hEnv.color, 'magenta');
+  simple.equal(55, hEnv.mood, 'somber');
+  simple.equal(56, hEnv.bgColor, undef);
+  return simple.equal(57, hEnv.value, '1');
 })();
 
 (function() {
   var hEnv;
   hEnv = loadEnvLibFrom(root_dir);
-  simple.equal(64, hEnv.development, undef);
-  simple.equal(65, hEnv.color, 'azure');
-  simple.equal(66, hEnv.mood, 'happy');
-  simple.equal(67, hEnv.bgColor, undef);
-  return simple.equal(61, hEnv.value, '1');
+  simple.equal(63, hEnv.development, undef);
+  simple.equal(64, hEnv.color, 'azure');
+  simple.equal(65, hEnv.mood, 'happy');
+  simple.equal(66, hEnv.bgColor, undef);
+  return simple.equal(67, hEnv.value, '1');
 })();
 
 // ---------------------------------------------------------------------------
