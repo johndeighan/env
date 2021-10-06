@@ -302,7 +302,11 @@ export var loadEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hOptions = {
   if (rootName && !process.env[rootName]) {
     root = mkpath(rtrunc(path, 5));
     debug(`set env var ${rootName} to ${root}`);
-    process.env[rootName] = root;
+    if (hOptions.hCallbacks) {
+      hOptions.hCallbacks.setVar(rootName, root);
+    } else {
+      process.env[rootName] = root;
+    }
   }
   if (!hOptions.onefile) {
     // --- search upward for .env files, but process top down
