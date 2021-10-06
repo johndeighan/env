@@ -7,8 +7,8 @@ import {log} from '@jdeighan/coffee-utils/log'
 import {mkpath, slurp} from '@jdeighan/coffee-utils/fs'
 import {loadEnvFrom} from '@jdeighan/env'
 
-# --- import this to get access to all environment variables
-#     NOTE: You'll need to import and call loadEnvLibFrom()
+#     NOTE: You'll need to call loadEnvLibFrom() and save the return value
+#     NOTE: keys are case sensitive
 hEnv = {}
 
 # ---------------------------------------------------------------------------
@@ -29,6 +29,20 @@ hCallbacks = {
 	names:    () ->
 		return Object.keys(hEnv)
 	}
+
+# ---------------------------------------------------------------------------
+
+export setEnvLibVar = (name, value) ->
+
+	hCallbacks.setVar(name, value)
+	return
+
+# ---------------------------------------------------------------------------
+
+export getEnvLibVar = (name, value) ->
+
+	hCallbacks.getVar(name, value)
+	return
 
 # ---------------------------------------------------------------------------
 

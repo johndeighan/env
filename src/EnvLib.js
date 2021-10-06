@@ -23,8 +23,8 @@ import {
   loadEnvFrom
 } from '@jdeighan/env';
 
-// --- import this to get access to all environment variables
-//     NOTE: You'll need to import and call loadEnvLibFrom()
+//     NOTE: You'll need to call loadEnvLibFrom() and save the return value
+//     NOTE: keys are case sensitive
 hEnv = {};
 
 // ---------------------------------------------------------------------------
@@ -45,6 +45,16 @@ hCallbacks = {
   names: function() {
     return Object.keys(hEnv);
   }
+};
+
+// ---------------------------------------------------------------------------
+export var setEnvLibVar = function(name, value) {
+  hCallbacks.setVar(name, value);
+};
+
+// ---------------------------------------------------------------------------
+export var getEnvLibVar = function(name, value) {
+  hCallbacks.getVar(name, value);
 };
 
 // ---------------------------------------------------------------------------
