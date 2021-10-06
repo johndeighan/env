@@ -7,9 +7,11 @@ import {log} from '@jdeighan/coffee-utils/log'
 import {mkpath, slurp} from '@jdeighan/coffee-utils/fs'
 import {loadEnvFrom} from '@jdeighan/env'
 
-#     NOTE: You'll need to call loadEnvLibFrom() and save the return value
+#     NOTE: use by:
+#              1. call loadEnvLibFrom()
+#              2. import hEnv and use directly
 #     NOTE: keys are case sensitive
-hEnv = {}
+export hEnv = {}
 
 # ---------------------------------------------------------------------------
 # Define custom callbacks to use with loadEnvFrom
@@ -29,20 +31,6 @@ hCallbacks = {
 	names:    () ->
 		return Object.keys(hEnv)
 	}
-
-# ---------------------------------------------------------------------------
-
-export setEnvLibVar = (name, value) ->
-
-	hCallbacks.setVar(name, value)
-	return
-
-# ---------------------------------------------------------------------------
-
-export getEnvLibVar = (name, value) ->
-
-	hCallbacks.getVar(name, value)
-	return
 
 # ---------------------------------------------------------------------------
 
