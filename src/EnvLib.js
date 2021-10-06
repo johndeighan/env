@@ -42,7 +42,12 @@ hCallbacks = {
     delete hEnv[name];
   },
   clearAll: function() {
-    hEnv = {};
+    var i, key, len, ref;
+    ref = Object.keys(hEnv);
+    for (i = 0, len = ref.length; i < len; i++) {
+      key = ref[i];
+      delete hEnv[name];
+    }
   },
   names: function() {
     return Object.keys(hEnv);

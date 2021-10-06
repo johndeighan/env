@@ -26,7 +26,8 @@ hCallbacks = {
 		delete hEnv[name]
 		return
 	clearAll: () ->
-		hEnv = {}
+		for key in Object.keys(hEnv)
+			delete hEnv[name]
 		return
 	names:    () ->
 		return Object.keys(hEnv)
