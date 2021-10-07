@@ -9,7 +9,23 @@ import {
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
+import {hEnvLib, hEnvLibCallbacks} from '@jdeighan/coffee-utils/envlib'
 import {PLLParser} from '@jdeighan/string-input'
+
+hDefCallbacks = {
+	getVar: (name) ->
+		return process.env[name]
+	setVar: (name, value) ->
+		process.env[name] = value
+		return
+	clearVar: (name) ->
+		delete process.env[name]
+		return
+	clearAll: () ->
+		process.env ={}
+	names: () ->
+		return Object.keys(process.env)
+	}
 
 # ---------------------------------------------------------------------------
 
@@ -25,7 +41,10 @@ export class EnvLoader extends PLLParser
 
 		super contents
 		{@prefix, @stripPrefix, @hCallbacks} = hOptions
-		@checkCallbacks()
+		if @hCallbacks?
+			@checkCallbacks()
+		else
+			@hCallbacks = hDefCallbacks
 
 	# ..........................................................
 
@@ -44,51 +63,34 @@ export class EnvLoader extends PLLParser
 
 	getVar: (name) ->
 
-		if @hCallbacks
-			return @hCallbacks.getVar(name)
-		else
-			return process.env[name]
-		return
+		return @hCallbacks.getVar(name)
 
 	# ..........................................................
 
 	setVar: (name, value) ->
 
-		if @hCallbacks
-			@hCallbacks.setVar name, value
-		else
-			process.env[name] = value
+		@hCallbacks.setVar name, value
 		return
 
 	# ..........................................................
 
 	clearVar: (name) ->
 
-		if @hCallbacks
-			@hCallbacks.clearVar name
-		else
-			delete process.env[name]
+		@hCallbacks.clearVar name
 		return
 
 	# ..........................................................
 
 	clearAll: () ->
 
-		if @hCallbacks
-			@hCallbacks.clearAll
-		else
-			process.env = {}
+		@hCallbacks.clearAll
 		return
 
 	# ..........................................................
 
 	names: () ->
 
-		if @hCallbacks
-			return @hCallbacks.names()
-		else
-			return Object.keys(process.env)
-		return
+		return @hCallbacks.names()
 
 	# ..........................................................
 
@@ -253,14 +255,6 @@ export class EnvLoader extends PLLParser
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
-# Load environment from a file
-
-export loadEnvFile = (filepath, hOptions={}) ->
-
-	debug "LOADENV #{filepath}"
-	return loadEnvString slurp(filepath), hOptions
-
-# ---------------------------------------------------------------------------
 # Load environment from a string
 
 export loadEnvString = (contents, hOptions={}) ->
@@ -269,7 +263,16 @@ export loadEnvString = (contents, hOptions={}) ->
 	env = new EnvLoader(contents, hOptions)
 	env.load()
 	debug "return from loadEnvString()"
-	return env
+	return
+
+# ---------------------------------------------------------------------------
+# Load environment from a file
+
+export loadEnvFile = (filepath, hOptions={}) ->
+
+	debug "LOADENV #{filepath}"
+	loadEnvString slurp(filepath), hOptions
+	return
 
 # ---------------------------------------------------------------------------
 # Load environment from .env file
@@ -277,6 +280,7 @@ export loadEnvString = (contents, hOptions={}) ->
 export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 	# --- valid options:
 	#        onefile - load only the first file found
+	#        hCallbacks - getVar, setVar, clearVar, clearAll, names
 
 	debug "enter loadEnvFrom('#{searchDir}', rootName=#{rootName})"
 	path = pathTo('.env', searchDir, "up")
@@ -284,7 +288,6 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 		debug "return from loadEnvFrom() - no .env file found"
 		return
 	debug "found .env file: #{path}"
-	lPaths = [path]
 
 	# --- Don't set root directory if it's already defined
 	if rootName && not process.env[rootName]
@@ -293,16 +296,32 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 		if hOptions.hCallbacks
 			hOptions.hCallbacks.setVar(rootName, root)
 		else
-			process.env[rootName] = root
+			hDefCallbacks.setVar(rootName, root)
 
+	lPaths = [path]    # --- build an array of paths
 	if not hOptions.onefile
 		# --- search upward for .env files, but process top down
 		while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
 			debug "found .env file: #{path}"
 			lPaths.unshift path
 
-	hEnv = {}
 	for path in lPaths
-		hEnv = Object.assign(hEnv, loadEnvFile(path, hOptions))
+		loadEnvFile(path, hOptions)
 	debug "return from loadEnvFrom()"
-	return hEnv
+	return
+
+# ---------------------------------------------------------------------------
+# Instead of loading into process.env,
+# this loads into hEnvLib from '@jdeighan/coffee-utils/envlib'
+
+export loadEnvLibFrom = (searchDir, rootName='DIR_ROOT', hInit=undef) ->
+
+	hEnvLibCallbacks.clearAll()
+
+	# --- Load any vars found in hInit
+	if hInit?
+		for name,value of hInit
+			hEnvLibCallbacks.setVar name, value
+
+	loadEnvFrom(searchDir, rootName, {hCallbacks: hEnvLibCallbacks})
+	return

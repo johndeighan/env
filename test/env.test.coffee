@@ -159,13 +159,13 @@ test/subdir .env    (in sub_dir)
 			stripPrefix: true,
 			})
 
-	simple.equal 156, env.getVar('dir_root'),  undef
-	simple.equal 157, env.getVar('sb.indent'), undef
-	simple.equal 158, env.getVar('indent'),    '3'
+	simple.equal 156, process.env['dir_root'],  undef
+	simple.equal 157, process.env['sb.indent'], undef
+	simple.equal 158, process.env['indent'],    '3'
 
-	simple.equal 160, env.getVar('dir_data'),  undef
-	simple.equal 161, env.getVar('sb.dev'),    undef
-	simple.equal 162, env.getVar('dev'),       'yes'
+	simple.equal 160, process.env['dir_data'],  undef
+	simple.equal 161, process.env['sb.dev'],    undef
+	simple.equal 162, process.env['dev'],       'yes'
 
 	)()
 
