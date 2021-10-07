@@ -38,9 +38,9 @@ import {
 } from '@jdeighan/coffee-utils/fs';
 
 import {
-  hEnvLib,
-  hEnvLibCallbacks
-} from '@jdeighan/coffee-utils/envlib';
+  hPrivEnv,
+  hPrivEnvCallbacks
+} from '@jdeighan/coffee-utils/privenv';
 
 import {
   PLLParser
@@ -333,18 +333,18 @@ export var loadEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hOptions = {
 
 // ---------------------------------------------------------------------------
 // Instead of loading into process.env,
-// this loads into hEnvLib from '@jdeighan/coffee-utils/envlib'
-export var loadEnvLibFrom = function(searchDir, rootName = 'DIR_ROOT', hInit = undef) {
+// this loads into hPrivEnv from '@jdeighan/coffee-utils/privenv'
+export var loadPrivEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hInit = undef) {
   var name, value;
-  hEnvLibCallbacks.clearAll();
+  hPrivEnvCallbacks.clearAll();
   // --- Load any vars found in hInit
   if (hInit != null) {
     for (name in hInit) {
       value = hInit[name];
-      hEnvLibCallbacks.setVar(name, value);
+      hPrivEnvCallbacks.setVar(name, value);
     }
   }
   loadEnvFrom(searchDir, rootName, {
-    hCallbacks: hEnvLibCallbacks
+    hCallbacks: hPrivEnvCallbacks
   });
 };

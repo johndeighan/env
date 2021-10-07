@@ -9,7 +9,7 @@ import {
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
-import {hEnvLib, hEnvLibCallbacks} from '@jdeighan/coffee-utils/envlib'
+import {hPrivEnv, hPrivEnvCallbacks} from '@jdeighan/coffee-utils/privenv'
 import {PLLParser} from '@jdeighan/string-input'
 
 hDefCallbacks = {
@@ -312,16 +312,16 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 
 # ---------------------------------------------------------------------------
 # Instead of loading into process.env,
-# this loads into hEnvLib from '@jdeighan/coffee-utils/envlib'
+# this loads into hPrivEnv from '@jdeighan/coffee-utils/privenv'
 
-export loadEnvLibFrom = (searchDir, rootName='DIR_ROOT', hInit=undef) ->
+export loadPrivEnvFrom = (searchDir, rootName='DIR_ROOT', hInit=undef) ->
 
-	hEnvLibCallbacks.clearAll()
+	hPrivEnvCallbacks.clearAll()
 
 	# --- Load any vars found in hInit
 	if hInit?
 		for name,value of hInit
-			hEnvLibCallbacks.setVar name, value
+			hPrivEnvCallbacks.setVar name, value
 
-	loadEnvFrom(searchDir, rootName, {hCallbacks: hEnvLibCallbacks})
+	loadEnvFrom(searchDir, rootName, {hCallbacks: hPrivEnvCallbacks})
 	return
