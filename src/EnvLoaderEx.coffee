@@ -1,7 +1,7 @@
 # EnvLoaderEx.coffee
 
 import {strict as assert} from 'assert'
-import {dirname, resolve, parse as parse_fname} from 'path';
+import {dirname, resolve, parse as parse_fname} from 'path'
 
 import {
 	undef, pass, error, rtrim, isArray, isFunction, rtrunc, escapeStr,
@@ -53,7 +53,7 @@ export class EnvLoader extends PLLParser
 		if @hCallbacks?
 			lMissing = []
 			for name in ['getVar','setVar','clearVar','clearAll','names']
-				if not isFunction(@hCallbacks[name])
+				if ! isFunction(@hCallbacks[name])
 					lMissing.push(name)
 			if (lMissing.length > 0)
 				error "Missing callbacks: #{lMissing.join(',')}"
@@ -284,13 +284,13 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 
 	debug "enter loadEnvFrom('#{searchDir}', rootName=#{rootName})"
 	path = pathTo('.env', searchDir, "up")
-	if not path?
+	if ! path?
 		debug "return from loadEnvFrom() - no .env file found"
 		return
 	debug "found .env file: #{path}"
 
 	# --- Don't set root directory if it's already defined
-	if rootName && not process.env[rootName]
+	if rootName && ! process.env[rootName]
 		root = mkpath(rtrunc(path, 5))
 		debug "set env var #{rootName} to #{root}"
 		if hOptions.hCallbacks
@@ -299,7 +299,7 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 			hDefCallbacks.setVar(rootName, root)
 
 	lPaths = [path]    # --- build an array of paths
-	if not hOptions.onefile
+	if ! hOptions.onefile
 		# --- search upward for .env files, but process top down
 		while path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")
 			debug "found .env file: #{path}"
@@ -325,3 +325,13 @@ export loadPrivEnvFrom = (searchDir, rootName='DIR_ROOT', hInit=undef) ->
 
 	loadEnvFrom(searchDir, rootName, {hCallbacks: hPrivEnvCallbacks})
 	return
+
+# ---------------------------------------------------------------------------
+
+if process.env.DIR_ROOT?
+	rootDir = process.env.DIR_ROOT
+	log "env var DIR_ROOT = '#{rootDir}'"
+	loadPrivEnvFrom rootDir
+	pass
+else
+	log "env var DIR_ROOT not set"
