@@ -350,11 +350,10 @@ export var loadPrivEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hInit = 
 };
 
 // ---------------------------------------------------------------------------
+
+// --- Auto-load private environment if true env var DIR_ROOT is set
 if (process.env.DIR_ROOT != null) {
   rootDir = process.env.DIR_ROOT;
   log(`env var DIR_ROOT = '${rootDir}'`);
   loadPrivEnvFrom(rootDir);
-  pass;
-} else {
-  log("env var DIR_ROOT not set");
 }
