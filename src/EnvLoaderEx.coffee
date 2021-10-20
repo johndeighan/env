@@ -31,7 +31,7 @@ hDefCallbacks = {
 
 export class EnvLoader extends PLLParser
 
-	constructor: (contents, hOptions={}) ->
+	constructor: (contents, source, hOptions={}) ->
 		# --- Valid options:
 		#        prefix - load only vars with this prefix
 		#        stripPrefix - remove the prefix before setting vars
@@ -39,7 +39,7 @@ export class EnvLoader extends PLLParser
 		#                     getVar, setVar, clearVar, clearAll, names
 
 
-		super contents
+		super contents, source
 		{@prefix, @stripPrefix, @hCallbacks} = hOptions
 		if @hCallbacks?
 			@checkCallbacks()
@@ -257,10 +257,10 @@ export class EnvLoader extends PLLParser
 # ---------------------------------------------------------------------------
 # Load environment from a string
 
-export loadEnvString = (contents, hOptions={}) ->
+export loadEnvString = (contents, hOptions={}, source=undef) ->
 
 	debug "enter loadEnvString()"
-	env = new EnvLoader(contents, hOptions)
+	env = new EnvLoader(contents, source, hOptions)
 	env.load()
 	debug "return from loadEnvString()"
 	return
@@ -271,7 +271,7 @@ export loadEnvString = (contents, hOptions={}) ->
 export loadEnvFile = (filepath, hOptions={}) ->
 
 	debug "LOADENV #{filepath}"
-	loadEnvString slurp(filepath), hOptions
+	loadEnvString undef, hOptions, filepath
 	return
 
 # ---------------------------------------------------------------------------

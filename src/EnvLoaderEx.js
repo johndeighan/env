@@ -66,13 +66,13 @@ hDefCallbacks = {
 
 // ---------------------------------------------------------------------------
 export var EnvLoader = class EnvLoader extends PLLParser {
-  constructor(contents, hOptions = {}) {
+  constructor(contents, source, hOptions = {}) {
     // --- Valid options:
     //        prefix - load only vars with this prefix
     //        stripPrefix - remove the prefix before setting vars
     //        hCallbacks - callbacks to replace:
     //                     getVar, setVar, clearVar, clearAll, names
-    super(contents);
+    super(contents, source);
     ({prefix: this.prefix, stripPrefix: this.stripPrefix, hCallbacks: this.hCallbacks} = hOptions);
     if (this.hCallbacks != null) {
       this.checkCallbacks();
@@ -277,10 +277,10 @@ export var EnvLoader = class EnvLoader extends PLLParser {
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Load environment from a string
-export var loadEnvString = function(contents, hOptions = {}) {
+export var loadEnvString = function(contents, hOptions = {}, source = undef) {
   var env;
   debug("enter loadEnvString()");
-  env = new EnvLoader(contents, hOptions);
+  env = new EnvLoader(contents, source, hOptions);
   env.load();
   debug("return from loadEnvString()");
 };
@@ -289,7 +289,7 @@ export var loadEnvString = function(contents, hOptions = {}) {
 // Load environment from a file
 export var loadEnvFile = function(filepath, hOptions = {}) {
   debug(`LOADENV ${filepath}`);
-  loadEnvString(slurp(filepath), hOptions);
+  loadEnvString(undef, hOptions, filepath);
 };
 
 // ---------------------------------------------------------------------------
