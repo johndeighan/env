@@ -1,7 +1,7 @@
 # lib.test.coffee
 
-import {strict as assert} from 'assert'
-import {resolve} from 'path';
+import assert from 'assert'
+import pathlib from 'path'
 
 import {undef} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
@@ -12,7 +12,7 @@ import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {loadPrivEnvFrom} from '@jdeighan/env'
 
 test_dir = mydir(`import.meta.url`)  # directory this file is in
-root_dir = resolve(test_dir, '..')
+root_dir = pathlib.resolve(test_dir, '..')
 sub_dir = mkpath(test_dir, 'subdir')
 
 simple = new UnitTester()

@@ -2,13 +2,9 @@
 // lib.test.coffee
 var root_dir, simple, sub_dir, test_dir;
 
-import {
-  strict as assert
-} from 'assert';
+import assert from 'assert';
 
-import {
-  resolve
-} from 'path';
+import pathlib from 'path';
 
 import {
   undef
@@ -43,7 +39,7 @@ import {
 
 test_dir = mydir(import.meta.url); // directory this file is in
 
-root_dir = resolve(test_dir, '..');
+root_dir = pathlib.resolve(test_dir, '..');
 
 sub_dir = mkpath(test_dir, 'subdir');
 

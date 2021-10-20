@@ -2,15 +2,9 @@
 // EnvLoaderEx.coffee
 var hDefCallbacks, rootDir;
 
-import {
-  strict as assert
-} from 'assert';
+import assert from 'assert';
 
-import {
-  dirname,
-  resolve,
-  parse as parse_fname
-} from 'path';
+import pathlib from 'path';
 
 import {
   undef,
@@ -319,7 +313,7 @@ export var loadEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hOptions = {
   lPaths = [path]; // --- build an array of paths
   if (!hOptions.onefile) {
     // --- search upward for .env files, but process top down
-    while (path = pathTo('.env', resolve(rtrunc(path, 5), '..'), "up")) {
+    while (path = pathTo('.env', pathlib.resolve(rtrunc(path, 5), '..'), "up")) {
       debug(`found .env file: ${path}`);
       lPaths.unshift(path);
     }
