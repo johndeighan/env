@@ -314,7 +314,7 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 # Instead of loading into process.env,
 # this loads into hPrivEnv from '@jdeighan/coffee-utils/privenv'
 
-export loadPrivEnvFrom = (searchDir, rootName='DIR_ROOT', hInit=undef) ->
+export loadPrivEnvFrom = (rootDir, rootName='DIR_ROOT', hInit=undef) ->
 
 	hPrivEnvCallbacks.clearAll()
 
@@ -323,14 +323,15 @@ export loadPrivEnvFrom = (searchDir, rootName='DIR_ROOT', hInit=undef) ->
 		for name,value of hInit
 			hPrivEnvCallbacks.setVar name, value
 
-	loadEnvFrom(searchDir, rootName, {hCallbacks: hPrivEnvCallbacks})
+	if rootName
+		hPrivEnvCallbacks.setVar rootName, rootDir
+	loadEnvFrom(rootDir, rootName, {hCallbacks: hPrivEnvCallbacks})
 	return
 
 # ---------------------------------------------------------------------------
 
 # --- Auto-load private environment if true env var DIR_ROOT is set
 
-if process.env.DIR_ROOT?
+if process.env.DIR_ROOT
 	rootDir = process.env.DIR_ROOT
-	log "env var DIR_ROOT = '#{rootDir}'"
-	loadPrivEnvFrom rootDir
+	loadPrivEnvFrom process.env.DIR_ROOT

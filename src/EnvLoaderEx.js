@@ -334,7 +334,7 @@ export var loadEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hOptions = {
 // ---------------------------------------------------------------------------
 // Instead of loading into process.env,
 // this loads into hPrivEnv from '@jdeighan/coffee-utils/privenv'
-export var loadPrivEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hInit = undef) {
+export var loadPrivEnvFrom = function(rootDir, rootName = 'DIR_ROOT', hInit = undef) {
   var name, value;
   hPrivEnvCallbacks.clearAll();
   // --- Load any vars found in hInit
@@ -344,7 +344,10 @@ export var loadPrivEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hInit = 
       hPrivEnvCallbacks.setVar(name, value);
     }
   }
-  loadEnvFrom(searchDir, rootName, {
+  if (rootName) {
+    hPrivEnvCallbacks.setVar(rootName, rootDir);
+  }
+  loadEnvFrom(rootDir, rootName, {
     hCallbacks: hPrivEnvCallbacks
   });
 };
@@ -352,8 +355,7 @@ export var loadPrivEnvFrom = function(searchDir, rootName = 'DIR_ROOT', hInit = 
 // ---------------------------------------------------------------------------
 
 // --- Auto-load private environment if true env var DIR_ROOT is set
-if (process.env.DIR_ROOT != null) {
+if (process.env.DIR_ROOT) {
   rootDir = process.env.DIR_ROOT;
-  log(`env var DIR_ROOT = '${rootDir}'`);
-  loadPrivEnvFrom(rootDir);
+  loadPrivEnvFrom(process.env.DIR_ROOT);
 }
