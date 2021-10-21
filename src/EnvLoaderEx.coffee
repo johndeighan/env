@@ -1,10 +1,9 @@
 # EnvLoaderEx.coffee
 
-import assert from 'assert'
 import pathlib from 'path'
 
 import {
-	undef, pass, error, rtrim, isArray, isFunction, rtrunc, escapeStr,
+	assert, undef, pass, error, rtrim, isArray, isFunction, rtrunc, escapeStr,
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'

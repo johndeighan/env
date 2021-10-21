@@ -2,11 +2,10 @@
 // EnvLoaderEx.coffee
 var hDefCallbacks, rootDir;
 
-import assert from 'assert';
-
 import pathlib from 'path';
 
 import {
+  assert,
   undef,
   pass,
   error,
