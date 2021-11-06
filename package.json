@@ -1,7 +1,7 @@
 {
 	"name": "@jdeighan/env",
 	"type": "module",
-	"version": "8.0.15",
+	"version": "8.0.16",
 	"description": "enhanced syntax for .env files",
 	"main": "./src/EnvLoaderEx.js",
 	"exports": {
