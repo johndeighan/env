@@ -3,12 +3,12 @@
 import pathlib from 'path'
 
 import {
-	assert, undef, pass, error, rtrim, isArray, isFunction, rtrunc, escapeStr,
+	assert, undef, pass, error, rtrim, isArray, isFunction,
+	rtrunc, escapeStr, croak,
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
-import {hPrivEnv, hPrivEnvCallbacks} from '@jdeighan/coffee-utils/privenv'
 import {PLLParser} from '@jdeighan/string-input'
 
 hDefCallbacks = {
@@ -276,26 +276,17 @@ export loadEnvFile = (filepath, hOptions={}) ->
 # ---------------------------------------------------------------------------
 # Load environment from .env file
 
-export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
+export loadEnvFrom = (searchDir, hOptions={}) ->
 	# --- valid options:
 	#        onefile - load only the first file found
 	#        hCallbacks - getVar, setVar, clearVar, clearAll, names
 
-	debug "enter loadEnvFrom('#{searchDir}', rootName=#{rootName})"
+	debug "enter loadEnvFrom('#{searchDir}')"
 	path = pathTo('.env', searchDir, "up")
 	if ! path?
 		debug "return from loadEnvFrom() - no .env file found"
 		return
 	debug "found .env file: #{path}"
-
-	# --- Don't set root directory if it's already defined
-	if rootName && ! process.env[rootName]
-		root = mkpath(rtrunc(path, 5))
-		debug "set env var #{rootName} to #{root}"
-		if hOptions.hCallbacks
-			hOptions.hCallbacks.setVar(rootName, root)
-		else
-			hDefCallbacks.setVar(rootName, root)
 
 	lPaths = [path]    # --- build an array of paths
 	if ! hOptions.onefile
@@ -310,27 +301,16 @@ export loadEnvFrom = (searchDir, rootName='DIR_ROOT', hOptions={}) ->
 	return
 
 # ---------------------------------------------------------------------------
-# Instead of loading into process.env,
-# this loads into hPrivEnv from '@jdeighan/coffee-utils/privenv'
+# Load environment
 
-export loadPrivEnvFrom = (rootDir, rootName='DIR_ROOT', hInit=undef) ->
+export loadEnv = (hOptions={}) ->
+	# --- valid options:
+	#        onefile - load only the first file found
+	#        hCallbacks - getVar, setVar, clearVar, clearAll, names
 
-	hPrivEnvCallbacks.clearAll()
-
-	# --- Load any vars found in hInit
-	if hInit?
-		for name,value of hInit
-			hPrivEnvCallbacks.setVar name, value
-
-	if rootName
-		hPrivEnvCallbacks.setVar rootName, rootDir
-	loadEnvFrom(rootDir, rootName, {hCallbacks: hPrivEnvCallbacks})
-	return
-
-# ---------------------------------------------------------------------------
-
-# --- Auto-load private environment if true env var DIR_ROOT is set
-
-if process.env.DIR_ROOT
-	rootDir = process.env.DIR_ROOT
-	loadPrivEnvFrom process.env.DIR_ROOT
+	debug "enter loadEnv()"
+	dir = process.env.DIR_ROOT
+	if dir
+		loadEnvFrom(dir, hOptions)
+	else
+		croak "env var DIR_ROOT not set!"

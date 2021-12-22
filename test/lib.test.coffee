@@ -7,19 +7,18 @@ import {undef} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {log} from '@jdeighan/coffee-utils/log'
 import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
-import {hPrivEnv, hPrivEnvCallbacks} from '@jdeighan/coffee-utils/privenv'
 import {UnitTester} from '@jdeighan/coffee-utils/test'
-import {loadPrivEnvFrom} from '@jdeighan/env'
+import {loadEnvFrom} from '@jdeighan/env'
 
 test_dir = mydir(`import.meta.url`)  # directory this file is in
-root_dir = pathlib.resolve(test_dir, '..')
+project_dir = pathlib.resolve(test_dir, '..')
 sub_dir = mkpath(test_dir, 'subdir')
 
 simple = new UnitTester()
 
 ###   Contents of relevant .env files:
 
-Root .env   (in root_dir)
+Root .env   (in project_dir)
 
 	if development
 		color = magenta
@@ -46,64 +45,70 @@ test/subdir .env    (in sub_dir)
 
 ###
 # ---------------------------------------------------------------------------
-# --- test loading from root_dir
+# --- test loading from project_dir
 
 (() ->
-	loadPrivEnvFrom(root_dir, undef, {development: 'yes'})
+	process.env.development = 'yes'
+	loadEnvFrom(project_dir)
 
-	simple.equal 54, hPrivEnv.development, 'yes'
-	simple.equal 55, hPrivEnv.color, 'magenta'
-	simple.equal 56, hPrivEnv.mood, 'somber'
-	simple.equal 57, hPrivEnv.bgColor, undef
-	simple.equal 58, hPrivEnv.value, '1'
+	simple.equal 54, process.env.development, 'yes'
+	simple.equal 55, process.env.color, 'magenta'
+	simple.equal 56, process.env.mood, 'somber'
+	simple.equal 57, process.env.bgColor, undef
+	simple.equal 58, process.env.value, '1'
 	)()
 
 (() ->
-	loadPrivEnvFrom(root_dir)
+	process.env.development = ''
+	loadEnvFrom(project_dir)
 
-	simple.equal 64, hPrivEnv.development, undef
-	simple.equal 65, hPrivEnv.color, 'azure'
-	simple.equal 66, hPrivEnv.mood, 'happy'
-	simple.equal 67, hPrivEnv.bgColor, undef
-	simple.equal 68, hPrivEnv.value, '1'
+	simple.equal 64, process.env.development, ''
+	simple.equal 65, process.env.color, 'azure'
+	simple.equal 66, process.env.mood, 'happy'
+	simple.equal 67, process.env.bgColor, undef
+	simple.equal 68, process.env.value, '1'
 	)()
 
 # ---------------------------------------------------------------------------
 # --- test loading from test_dir
 
 (() ->
-	loadPrivEnvFrom(test_dir, undef, {development: 'yes'})
+	process.env.development = 'yes'
+	loadEnvFrom(test_dir)
 
-	simple.equal 77, hPrivEnv.development, 'yes'
-	simple.equal 78, hPrivEnv.color, 'magenta'
-	simple.equal 79, hPrivEnv.mood, 'somber'
-	simple.equal 80, hPrivEnv.bgColor, 'sadness'
-	simple.equal 81, hPrivEnv.value, '2'
+	simple.equal 77, process.env.development, 'yes'
+	simple.equal 78, process.env.color, 'magenta'
+	simple.equal 79, process.env.mood, 'somber'
+	simple.equal 80, process.env.bgColor, 'sadness'
+	simple.equal 81, process.env.value, '2'
 	)()
 
 (() ->
-	loadPrivEnvFrom(test_dir)
+	process.env.development = ''
+	loadEnvFrom(test_dir)
 
-	simple.equal 87, hPrivEnv.development, undef
-	simple.equal 88, hPrivEnv.color, 'azure'
-	simple.equal 89, hPrivEnv.mood, 'happy'
-	simple.equal 90, hPrivEnv.bgColor, 'purple'
-	simple.equal 91, hPrivEnv.value, '2'
+	simple.equal 87, process.env.development, ''
+	simple.equal 88, process.env.color, 'azure'
+	simple.equal 89, process.env.mood, 'happy'
+	simple.equal 90, process.env.bgColor, 'purple'
+	simple.equal 91, process.env.value, '2'
 	)()
 
 # ---------------------------------------------------------------------------
 # --- test loading from sub_dir
 
 (() ->
-	loadPrivEnvFrom(sub_dir, undef, {development: 'yes'})
+	process.env.development = 'yes'
+	loadEnvFrom(sub_dir)
 
-	simple.equal 100, hPrivEnv.show, 'maybe'
-	simple.equal 101, hPrivEnv.value, '3'
+	simple.equal 100, process.env.show, 'maybe'
+	simple.equal 101, process.env.value, '3'
 	)()
 
 (() ->
-	loadPrivEnvFrom(sub_dir)
+	process.env.development = ''
+	loadEnvFrom(sub_dir)
 
-	simple.equal 107, hPrivEnv.show, 'maybe'
-	simple.equal 108, hPrivEnv.value, '3'
+	simple.equal 107, process.env.show, 'maybe'
+	simple.equal 108, process.env.value, '3'
 	)()
