@@ -127,10 +127,11 @@ export var EnvLoader = class EnvLoader extends PLLParser {
   // ..........................................................
   mapNode(str) {
     var _, key, lMatches, neg, op, result, value;
-    debug(`enter mapNode('${escapeStr(str)}')`);
+    debug(`enter EnvLoader.mapNode('${escapeStr(str)}')`);
     if (lMatches = str.match(/^([A-Za-z_\.]+)\s*=\s*(.*)$/)) { // identifier
       [_, key, value] = lMatches;
       if (this.prefix && (key.indexOf(this.prefix) !== 0)) {
+        debug("return from EnvLoader.mapNode()");
         return undef;
       }
       if (this.stripPrefix) {
@@ -166,7 +167,7 @@ export var EnvLoader = class EnvLoader extends PLLParser {
     } else {
       error(`Invalid line: '${str}'`);
     }
-    debug("return from mapNode():", result);
+    debug("return from EnvLoader.mapNode():", result);
     return result;
   }
 

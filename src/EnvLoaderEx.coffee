@@ -104,7 +104,7 @@ export class EnvLoader extends PLLParser
 
 	mapNode: (str) ->
 
-		debug "enter mapNode('#{escapeStr(str)}')"
+		debug "enter EnvLoader.mapNode('#{escapeStr(str)}')"
 		if lMatches = str.match(///^
 				([A-Za-z_\.]+)      # identifier
 				\s*
@@ -114,6 +114,7 @@ export class EnvLoader extends PLLParser
 				$///)
 			[_, key, value] = lMatches
 			if @prefix && (key.indexOf(@prefix) != 0)
+				debug "return from EnvLoader.mapNode()"
 				return undef
 			if @stripPrefix
 				key = key.substring(@prefix.length)
@@ -161,7 +162,7 @@ export class EnvLoader extends PLLParser
 				}
 		else
 			error "Invalid line: '#{str}'"
-		debug "return from mapNode():", result
+		debug "return from EnvLoader.mapNode():", result
 		return result
 
 	# ..........................................................
