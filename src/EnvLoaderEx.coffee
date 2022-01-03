@@ -299,19 +299,4 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 	for path in lPaths
 		loadEnvFile(path, hOptions)
 	debug "return from loadEnvFrom()"
-	return
-
-# ---------------------------------------------------------------------------
-# Load environment
-
-export loadEnv = (hOptions={}) ->
-	# --- valid options:
-	#        onefile - load only the first file found
-	#        hCallbacks - getVar, setVar, clearVar, clearAll, names
-
-	debug "enter loadEnv()"
-	dir = process.env.DIR_ROOT
-	if dir
-		loadEnvFrom(dir, hOptions)
-	else
-		croak "env var DIR_ROOT not set!"
+	return lPaths

@@ -309,20 +309,5 @@ export var loadEnvFrom = function(searchDir, hOptions = {}) {
     loadEnvFile(path, hOptions);
   }
   debug("return from loadEnvFrom()");
-};
-
-// ---------------------------------------------------------------------------
-// Load environment
-export var loadEnv = function(hOptions = {}) {
-  var dir;
-  // --- valid options:
-  //        onefile - load only the first file found
-  //        hCallbacks - getVar, setVar, clearVar, clearAll, names
-  debug("enter loadEnv()");
-  dir = process.env.DIR_ROOT;
-  if (dir) {
-    return loadEnvFrom(dir, hOptions);
-  } else {
-    return croak("env var DIR_ROOT not set!");
-  }
+  return lPaths;
 };
