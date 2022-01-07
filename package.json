@@ -31,8 +31,9 @@
 	},
 	"homepage": "https://github.com/johndeighan/env#readme",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^4.1.17",
-		"@jdeighan/string-input": "^8.0.43",
+		"@jdeighan/coffee-utils": "^4.1.18",
+		"@jdeighan/string-input": "^8.0.44",
+		"ava": "^3.15.0",
 		"coffeescript": "^2.6.1",
 		"cross-env": "^7.0.3"
 	}
