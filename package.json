@@ -31,10 +31,12 @@
 	},
 	"homepage": "https://github.com/johndeighan/env#readme",
 	"dependencies": {
-		"@jdeighan/coffee-utils": "^4.1.23",
-		"@jdeighan/string-input": "^8.0.47",
-		"ava": "^3.15.0",
+		"@jdeighan/coffee-utils": "^5.0.0",
+		"@jdeighan/string-input": "^9.0.0",
 		"coffeescript": "^2.6.1",
 		"cross-env": "^7.0.3"
+	},
+	"devDependencies": {
+		"@jdeighan/unit-tester": "^1.0.4"
 	}
 }

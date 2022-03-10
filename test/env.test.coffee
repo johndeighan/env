@@ -3,11 +3,11 @@
 import assert from 'assert'
 import pathlib from 'path'
 
+import {UnitTester} from '@jdeighan/unit-tester'
 import {undef} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {log} from '@jdeighan/coffee-utils/log'
 import {mydir, mkpath} from '@jdeighan/coffee-utils/fs'
-import {UnitTester} from '@jdeighan/coffee-utils/test'
 import {loadEnvFrom, loadEnvString} from '@jdeighan/env'
 
 test_dir = mydir(`import.meta.url`)  # directory this file is in
