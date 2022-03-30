@@ -9,7 +9,7 @@ import {
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
-import {PLLParser} from '@jdeighan/string-input'
+import {PLLParser} from '@jdeighan/string-input/pll'
 
 hDefCallbacks = {
 	getVar: (name) ->
