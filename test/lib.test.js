@@ -83,11 +83,11 @@ test/subdir .env    (in sub_dir)
 (function() {
   process.env.development = '';
   loadEnvFrom(project_dir);
-  simple.equal(64, process.env.development, '');
-  simple.equal(65, process.env.color, 'azure');
-  simple.equal(66, process.env.mood, 'happy');
-  simple.equal(67, process.env.bgColor, undef);
-  return simple.equal(68, process.env.value, '1');
+  simple.equal(65, process.env.development, '');
+  simple.equal(66, process.env.color, 'azure');
+  simple.equal(67, process.env.mood, 'happy');
+  simple.equal(68, process.env.bgColor, undef);
+  return simple.equal(69, process.env.value, '1');
 })();
 
 // ---------------------------------------------------------------------------
@@ -95,21 +95,21 @@ test/subdir .env    (in sub_dir)
 (function() {
   process.env.development = 'yes';
   loadEnvFrom(test_dir);
-  simple.equal(77, process.env.development, 'yes');
-  simple.equal(78, process.env.color, 'magenta');
-  simple.equal(79, process.env.mood, 'somber');
-  simple.equal(80, process.env.bgColor, 'sadness');
-  return simple.equal(81, process.env.value, '2');
+  simple.equal(79, process.env.development, 'yes');
+  simple.equal(80, process.env.color, 'magenta');
+  simple.equal(81, process.env.mood, 'somber');
+  simple.equal(82, process.env.bgColor, 'sadness');
+  return simple.equal(83, process.env.value, '2');
 })();
 
 (function() {
   process.env.development = '';
   loadEnvFrom(test_dir);
-  simple.equal(87, process.env.development, '');
-  simple.equal(88, process.env.color, 'azure');
-  simple.equal(89, process.env.mood, 'happy');
-  simple.equal(90, process.env.bgColor, 'purple');
-  return simple.equal(91, process.env.value, '2');
+  simple.equal(90, process.env.development, '');
+  simple.equal(91, process.env.color, 'azure');
+  simple.equal(92, process.env.mood, 'happy');
+  simple.equal(93, process.env.bgColor, 'purple');
+  return simple.equal(94, process.env.value, '2');
 })();
 
 // ---------------------------------------------------------------------------
@@ -117,13 +117,13 @@ test/subdir .env    (in sub_dir)
 (function() {
   process.env.development = 'yes';
   loadEnvFrom(sub_dir);
-  simple.equal(100, process.env.show, 'maybe');
-  return simple.equal(101, process.env.value, '3');
+  simple.equal(104, process.env.show, 'maybe');
+  return simple.equal(105, process.env.value, '3');
 })();
 
 (function() {
   process.env.development = '';
   loadEnvFrom(sub_dir);
-  simple.equal(107, process.env.show, 'maybe');
-  return simple.equal(108, process.env.value, '3');
+  simple.equal(112, process.env.show, 'maybe');
+  return simple.equal(113, process.env.value, '3');
 })();

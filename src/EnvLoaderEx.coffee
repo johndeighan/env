@@ -9,7 +9,7 @@ import {
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
 import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
-import {PLLParser} from '@jdeighan/string-input/pll'
+import {TreeMapper} from '@jdeighan/mapper/tree'
 
 hDefCallbacks = {
 	getVar: (name) ->
@@ -28,7 +28,7 @@ hDefCallbacks = {
 
 # ---------------------------------------------------------------------------
 
-export class EnvLoader extends PLLParser
+export class EnvLoader extends TreeMapper
 
 	constructor: (contents, source, hOptions={}) ->
 		# --- Valid options:
@@ -199,9 +199,11 @@ export class EnvLoader extends PLLParser
 
 	procEnv: (tree) ->
 
-		debug "enter procEnv()"
+		assert tree?, "procEnv(): tree is undef"
+		debug "enter procEnv()", tree
 
 		for h in tree
+			debug 'h', h
 			switch h.node.type
 
 				when 'assign'
@@ -214,8 +216,8 @@ export class EnvLoader extends PLLParser
 					{key} = h.node
 					debug "if_truthy: '#{key}'"
 					if @getVar(key)
-						debug "procEnv(): if_truthy('#{key}') - proc body"
-						@procEnv(h.body)
+						debug "procEnv(): if_truthy('#{key}') - proc subtree"
+						@procEnv(h.subtree)
 					else
 						debug "procEnv(): if_truthy('#{key}') - skip"
 
@@ -225,15 +227,15 @@ export class EnvLoader extends PLLParser
 					if @getVar(key)
 						debug "procEnv(): if_falsy('#{key}') - skip"
 					else
-						debug "procEnv(): if_falsy('#{key}') - proc body"
-						@procEnv(h.body)
+						debug "procEnv(): if_falsy('#{key}') - proc subtree"
+						@procEnv(h.subtree)
 
 				when 'compare'
 					{key, op, value} = h.node
 					debug "procEnv(key=#{key}, value=#{value})"
 					if @doCompare(key, op, value)
-						debug "procEnv(): compare('#{key}','#{value}') - proc body"
-						@procEnv(h.body)
+						debug "procEnv(): compare('#{key}','#{value}') - proc subtree"
+						@procEnv(h.subtree)
 					else
 						debug "procEnv(): compare('#{key}','#{value}') - skip"
 
@@ -270,8 +272,10 @@ export loadEnvString = (contents, hOptions={}, source=undef) ->
 
 export loadEnvFile = (filepath, hOptions={}) ->
 
-	debug "LOADENV #{filepath}"
-	loadEnvString undef, hOptions, filepath
+	debug "enter loadEnvFile #{filepath}"
+	contents = slurp filepath
+	loadEnvString contents, hOptions, filepath
+	debug "return from loadEnvFile"
 	return
 
 # ---------------------------------------------------------------------------
@@ -282,7 +286,7 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 	#        onefile - load only the first file found
 	#        hCallbacks - getVar, setVar, clearVar, clearAll, names
 
-	debug "enter loadEnvFrom('#{searchDir}')"
+	debug "enter loadEnvFrom '#{searchDir}'"
 	path = pathTo('.env', searchDir, "up")
 	if ! path?
 		debug "return from loadEnvFrom() - no .env file found"
@@ -296,7 +300,8 @@ export loadEnvFrom = (searchDir, hOptions={}) ->
 			debug "found .env file: #{path}"
 			lPaths.unshift path
 
-	for path in lPaths
-		loadEnvFile(path, hOptions)
+	debug 'lPaths', lPaths
+	for filepath in lPaths
+		loadEnvFile filepath, hOptions
 	debug "return from loadEnvFrom()"
 	return lPaths

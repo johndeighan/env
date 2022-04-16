@@ -32,8 +32,8 @@ import {
 } from '@jdeighan/coffee-utils/fs';
 
 import {
-  PLLParser
-} from '@jdeighan/string-input/pll';
+  TreeMapper
+} from '@jdeighan/mapper/tree';
 
 hDefCallbacks = {
   getVar: function(name) {
@@ -54,7 +54,7 @@ hDefCallbacks = {
 };
 
 // ---------------------------------------------------------------------------
-export var EnvLoader = class EnvLoader extends PLLParser {
+export var EnvLoader = class EnvLoader extends TreeMapper {
   constructor(contents, source, hOptions = {}) {
     // --- Valid options:
     //        prefix - load only vars with this prefix
@@ -206,9 +206,11 @@ export var EnvLoader = class EnvLoader extends PLLParser {
   // ..........................................................
   procEnv(tree) {
     var h, i, key, len, op, value;
-    debug("enter procEnv()");
+    assert(tree != null, "procEnv(): tree is undef");
+    debug("enter procEnv()", tree);
     for (i = 0, len = tree.length; i < len; i++) {
       h = tree[i];
+      debug('h', h);
       switch (h.node.type) {
         case 'assign':
           ({key, value} = h.node);
@@ -220,8 +222,8 @@ export var EnvLoader = class EnvLoader extends PLLParser {
           ({key} = h.node);
           debug(`if_truthy: '${key}'`);
           if (this.getVar(key)) {
-            debug(`procEnv(): if_truthy('${key}') - proc body`);
-            this.procEnv(h.body);
+            debug(`procEnv(): if_truthy('${key}') - proc subtree`);
+            this.procEnv(h.subtree);
           } else {
             debug(`procEnv(): if_truthy('${key}') - skip`);
           }
@@ -232,16 +234,16 @@ export var EnvLoader = class EnvLoader extends PLLParser {
           if (this.getVar(key)) {
             debug(`procEnv(): if_falsy('${key}') - skip`);
           } else {
-            debug(`procEnv(): if_falsy('${key}') - proc body`);
-            this.procEnv(h.body);
+            debug(`procEnv(): if_falsy('${key}') - proc subtree`);
+            this.procEnv(h.subtree);
           }
           break;
         case 'compare':
           ({key, op, value} = h.node);
           debug(`procEnv(key=${key}, value=${value})`);
           if (this.doCompare(key, op, value)) {
-            debug(`procEnv(): compare('${key}','${value}') - proc body`);
-            this.procEnv(h.body);
+            debug(`procEnv(): compare('${key}','${value}') - proc subtree`);
+            this.procEnv(h.subtree);
           } else {
             debug(`procEnv(): compare('${key}','${value}') - skip`);
           }
@@ -278,18 +280,21 @@ export var loadEnvString = function(contents, hOptions = {}, source = undef) {
 // ---------------------------------------------------------------------------
 // Load environment from a file
 export var loadEnvFile = function(filepath, hOptions = {}) {
-  debug(`LOADENV ${filepath}`);
-  loadEnvString(undef, hOptions, filepath);
+  var contents;
+  debug(`enter loadEnvFile ${filepath}`);
+  contents = slurp(filepath);
+  loadEnvString(contents, hOptions, filepath);
+  debug("return from loadEnvFile");
 };
 
 // ---------------------------------------------------------------------------
 // Load environment from .env file
 export var loadEnvFrom = function(searchDir, hOptions = {}) {
-  var i, lPaths, len, path;
+  var filepath, i, lPaths, len, path;
   // --- valid options:
   //        onefile - load only the first file found
   //        hCallbacks - getVar, setVar, clearVar, clearAll, names
-  debug(`enter loadEnvFrom('${searchDir}')`);
+  debug(`enter loadEnvFrom '${searchDir}'`);
   path = pathTo('.env', searchDir, "up");
   if (path == null) {
     debug("return from loadEnvFrom() - no .env file found");
@@ -304,9 +309,10 @@ export var loadEnvFrom = function(searchDir, hOptions = {}) {
       lPaths.unshift(path);
     }
   }
+  debug('lPaths', lPaths);
   for (i = 0, len = lPaths.length; i < len; i++) {
-    path = lPaths[i];
-    loadEnvFile(path, hOptions);
+    filepath = lPaths[i];
+    loadEnvFile(filepath, hOptions);
   }
   debug("return from loadEnvFrom()");
   return lPaths;
