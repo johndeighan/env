@@ -32,7 +32,7 @@
 	"homepage": "https://github.com/johndeighan/env#readme",
 	"dependencies": {
 		"@jdeighan/coffee-utils": "^7.0.13",
-		"@jdeighan/mapper": "^13.0.9",
+		"@jdeighan/mapper": "^14.0.0",
 		"coffeescript": "^2.6.1",
 		"cross-env": "^7.0.3"
 	},
