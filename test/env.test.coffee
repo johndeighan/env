@@ -3,7 +3,7 @@
 import assert from 'assert'
 import pathlib from 'path'
 
-import {UnitTester} from '@jdeighan/unit-tester'
+import {UnitTesterNorm} from '@jdeighan/unit-tester'
 import {undef} from '@jdeighan/coffee-utils'
 import {debug, setDebugging} from '@jdeighan/coffee-utils/debug'
 import {log} from '@jdeighan/coffee-utils/log'
@@ -14,7 +14,7 @@ test_dir = mydir(`import.meta.url`)  # directory this file is in
 root_dir = pathlib.resolve(test_dir, '..')
 sub_dir = mkpath(test_dir, 'subdir')
 
-simple = new UnitTester()
+simple = new UnitTesterNorm()
 
 ###   Contents of relevant .env files:
 

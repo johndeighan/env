@@ -7,7 +7,7 @@ import assert from 'assert';
 import pathlib from 'path';
 
 import {
-  UnitTester
+  UnitTesterNorm
 } from '@jdeighan/unit-tester';
 
 import {
@@ -38,7 +38,7 @@ project_dir = pathlib.resolve(test_dir, '..');
 
 sub_dir = mkpath(test_dir, 'subdir');
 
-simple = new UnitTester();
+simple = new UnitTesterNorm();
 
 /*   Contents of relevant .env files:
 
