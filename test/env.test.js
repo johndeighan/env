@@ -140,7 +140,8 @@ test/subdir .env    (in sub_dir)
 sb.indent = 3
 dir_data = /usr/project/data
 sb.dev = yes`, {
-    prefix: 'sb.' // load only keys with prefix 'sb.'
+    prefix: 'sb.', // load only keys with prefix 'sb.'
+    source: import.meta.url
   });
   simple.equal(128, process.env['dir_root'], undef);
   simple.equal(129, process.env['sb.indent'], '3');
@@ -162,6 +163,7 @@ sb.dev = yes`, {
 sb.indent = 3
 dir_data = /usr/project/data
 sb.dev = yes`, {
+    source: import.meta.url,
     prefix: 'sb.',
     stripPrefix: true
   });
@@ -197,7 +199,10 @@ sb.dev = yes`, {
   };
   loadEnvString(`dev = yes
 dir_root = /usr/project
-dir_data = $dir_root/data`, {hCallbacks});
+dir_data = $dir_root/data`, {
+    source: import.meta.url,
+    hCallbacks
+  });
   return simple.equal(194, hVariables, {
     dev: 'yes',
     dir_root: '/usr/project',

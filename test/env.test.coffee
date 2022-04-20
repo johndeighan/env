@@ -128,8 +128,9 @@ test/subdir .env    (in sub_dir)
 			dir_data = /usr/project/data
 			sb.dev = yes
 			""", {
-			prefix: 'sb.',     # load only keys with prefix 'sb.'
-			})
+				prefix: 'sb.',     # load only keys with prefix 'sb.'
+				source: import.meta.url
+				})
 
 	simple.equal 128, process.env['dir_root'],  undef
 	simple.equal 129, process.env['sb.indent'], '3'
@@ -155,9 +156,10 @@ test/subdir .env    (in sub_dir)
 			dir_data = /usr/project/data
 			sb.dev = yes
 			""", {
-			prefix: 'sb.',
-			stripPrefix: true,
-			})
+				source: import.meta.url
+				prefix: 'sb.',
+				stripPrefix: true,
+				})
 
 	simple.equal 156, process.env['dir_root'],  undef
 	simple.equal 157, process.env['sb.indent'], undef
@@ -194,6 +196,7 @@ test/subdir .env    (in sub_dir)
 			dir_root = /usr/project
 			dir_data = $dir_root/data
 			""", {
+				source: import.meta.url
 				hCallbacks
 				})
 

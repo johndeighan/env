@@ -11,6 +11,7 @@ import {
   error,
   rtrim,
   isArray,
+  isHash,
   isFunction,
   rtrunc,
   escapeStr,
@@ -269,10 +270,12 @@ export var EnvLoader = class EnvLoader extends TreeMapper {
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Load environment from a string
-export var loadEnvString = function(contents, hOptions = {}, source = undef) {
+export var loadEnvString = function(contents, hOptions) {
   var env;
-  debug("enter loadEnvString()");
-  env = new EnvLoader(contents, source, hOptions);
+  debug("enter loadEnvString()", hOptions);
+  assert(isHash(hOptions), `loadEnvString(): 2nd arg not a hash ${typeof hOptions}`);
+  assert(hOptions.source, "loadEnvString(): Missing source");
+  env = new EnvLoader(contents, hOptions.source, hOptions);
   env.load();
   debug("return from loadEnvString()");
 };
@@ -283,7 +286,8 @@ export var loadEnvFile = function(filepath, hOptions = {}) {
   var contents;
   debug(`enter loadEnvFile ${filepath}`);
   contents = slurp(filepath);
-  loadEnvString(contents, hOptions, filepath);
+  hOptions.source = filepath;
+  loadEnvString(contents, hOptions);
   debug("return from loadEnvFile");
 };
 

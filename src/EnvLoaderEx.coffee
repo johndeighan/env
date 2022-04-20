@@ -3,7 +3,7 @@
 import pathlib from 'path'
 
 import {
-	assert, undef, pass, error, rtrim, isArray, isFunction,
+	assert, undef, pass, error, rtrim, isArray, isHash, isFunction,
 	rtrunc, escapeStr, croak,
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
@@ -259,10 +259,13 @@ export class EnvLoader extends TreeMapper
 # ---------------------------------------------------------------------------
 # Load environment from a string
 
-export loadEnvString = (contents, hOptions={}, source=undef) ->
+export loadEnvString = (contents, hOptions) ->
 
-	debug "enter loadEnvString()"
-	env = new EnvLoader(contents, source, hOptions)
+	debug "enter loadEnvString()", hOptions
+	assert isHash(hOptions),\
+			"loadEnvString(): 2nd arg not a hash #{typeof hOptions}"
+	assert hOptions.source, "loadEnvString(): Missing source"
+	env = new EnvLoader(contents, hOptions.source, hOptions)
 	env.load()
 	debug "return from loadEnvString()"
 	return
@@ -274,7 +277,8 @@ export loadEnvFile = (filepath, hOptions={}) ->
 
 	debug "enter loadEnvFile #{filepath}"
 	contents = slurp filepath
-	loadEnvString contents, hOptions, filepath
+	hOptions.source = filepath
+	loadEnvString contents, hOptions
 	debug "return from loadEnvFile"
 	return
 
