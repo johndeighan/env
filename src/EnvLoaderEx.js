@@ -29,7 +29,8 @@ import {
 import {
   slurp,
   pathTo,
-  mkpath
+  mkpath,
+  parseSource
 } from '@jdeighan/coffee-utils/fs';
 
 import {
@@ -293,13 +294,16 @@ export var loadEnvFile = function(filepath, hOptions = {}) {
 
 // ---------------------------------------------------------------------------
 // Load environment from .env file
-export var loadEnvFrom = function(searchDir, hOptions = {}) {
-  var filepath, i, lPaths, len, path;
+export var loadEnvFrom = function(source, hOptions = {}) {
+  var filepath, hSourceInfo, i, lPaths, len, path;
   // --- valid options:
   //        onefile - load only the first file found
   //        hCallbacks - getVar, setVar, clearVar, clearAll, names
-  debug(`enter loadEnvFrom '${searchDir}'`);
-  path = pathTo('.env', searchDir, "up");
+  source = mkpath(source);
+  debug(`enter loadEnvFrom '${source}'`);
+  hSourceInfo = parseSource(source);
+  debug('hSourceInfo', hSourceInfo);
+  path = pathTo('.env', source, "up");
   if (path == null) {
     debug("return from loadEnvFrom() - no .env file found");
     return;

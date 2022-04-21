@@ -57,7 +57,7 @@ test/subdir .env    (in sub_dir)
 	simple.equal 57, process.env.bgColor, undef
 	simple.equal 61, process.env.value, '1'
 	)()
-
+setDebugging false
 (() ->
 	delete process.env.development
 	loadEnvFrom(root_dir)

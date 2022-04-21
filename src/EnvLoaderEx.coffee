@@ -8,7 +8,7 @@ import {
 	} from '@jdeighan/coffee-utils'
 import {log} from '@jdeighan/coffee-utils/log'
 import {debug} from '@jdeighan/coffee-utils/debug'
-import {slurp, pathTo, mkpath} from '@jdeighan/coffee-utils/fs'
+import {slurp, pathTo, mkpath, parseSource} from '@jdeighan/coffee-utils/fs'
 import {TreeMapper} from '@jdeighan/mapper/tree'
 
 hDefCallbacks = {
@@ -285,13 +285,16 @@ export loadEnvFile = (filepath, hOptions={}) ->
 # ---------------------------------------------------------------------------
 # Load environment from .env file
 
-export loadEnvFrom = (searchDir, hOptions={}) ->
+export loadEnvFrom = (source, hOptions={}) ->
 	# --- valid options:
 	#        onefile - load only the first file found
 	#        hCallbacks - getVar, setVar, clearVar, clearAll, names
 
-	debug "enter loadEnvFrom '#{searchDir}'"
-	path = pathTo('.env', searchDir, "up")
+	source = mkpath(source)
+	debug "enter loadEnvFrom '#{source}'"
+	hSourceInfo = parseSource(source)
+	debug 'hSourceInfo', hSourceInfo
+	path = pathTo('.env', source, "up")
 	if ! path?
 		debug "return from loadEnvFrom() - no .env file found"
 		return

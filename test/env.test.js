@@ -81,6 +81,8 @@ test/subdir .env    (in sub_dir)
   return simple.equal(61, process.env.value, '1');
 })();
 
+setDebugging(false);
+
 (function() {
   delete process.env.development;
   loadEnvFrom(root_dir);
